@@ -39,6 +39,11 @@
     <div class="interpretation-next"><strong>Try this next</strong><span>Adjust your price, profit goal or paid client time above and see how your result changes.</span></div>`;
   inputs.appendChild(card);
 
+  const exampleBannerText=document.querySelector('#exampleBanner > span');
+  if(exampleBannerText){
+    exampleBannerText.innerHTML='<strong>Example calculation:</strong> Social Media Management Package. Review the suggested price, current-price comparison and what the result means. These figures are for learning only, not a recommended BusinessBoosts price.';
+  }
+
   function value(id){return Math.max(0,Number(document.getElementById(id)?.value)||0)}
   function getPosition(){
     try{
