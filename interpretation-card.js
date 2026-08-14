@@ -23,7 +23,9 @@
   document.head.appendChild(style);
 
   const inputs=document.querySelector('.inputs');
-  if(!inputs) return;
+  const results=document.querySelector('.results');
+  const exampleBanner=document.getElementById('exampleBanner');
+  if(!inputs||!results) return;
 
   const card=document.createElement('section');
   card.className='interpretation-card';
@@ -39,9 +41,13 @@
     <div class="interpretation-next"><strong>Try this next</strong><span>Adjust your price, profit goal or paid client time above and see how your result changes.</span></div>`;
   inputs.appendChild(card);
 
-  const exampleBannerText=document.querySelector('#exampleBanner > span');
-  if(exampleBannerText){
-    exampleBannerText.innerHTML='<strong>Example calculation:</strong> Social Media Management Package. Review the suggested price, current-price comparison and what the result means. These figures are for learning only, not a recommended BusinessBoosts price.';
+  function placeCard(){
+    const exampleActive=exampleBanner&&exampleBanner.classList.contains('active');
+    if(exampleActive){
+      if(card.parentElement!==results||card!==results.lastElementChild) results.appendChild(card);
+    }else if(card.parentElement!==inputs){
+      inputs.appendChild(card);
+    }
   }
 
   function value(id){return Math.max(0,Number(document.getElementById(id)?.value)||0)}
@@ -75,6 +81,7 @@
   }
 
   function updateInterpretation(){
+    placeCard();
     const message=document.getElementById('interpretationMessage');
     const position=getPosition();
     card.classList.remove('below-cost','below-recommended','on-target');
@@ -98,5 +105,9 @@
   observer.observe(document.getElementById('directRows'),{childList:true,subtree:true});
   observer.observe(document.getElementById('activityRows'),{childList:true,subtree:true});
   observer.observe(document.getElementById('overheadRows'),{childList:true,subtree:true});
+  if(exampleBanner){
+    const exampleObserver=new MutationObserver(updateInterpretation);
+    exampleObserver.observe(exampleBanner,{attributes:true,attributeFilter:['class']});
+  }
   updateInterpretation();
 })();
