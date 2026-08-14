@@ -1,6 +1,9 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    { "source": "/", "destination": "/api/preview-page" }
+  ],
   "functions": {
     "api/preview-page.js": {
       "includeFiles": "index.html"
