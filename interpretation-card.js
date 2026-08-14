@@ -23,12 +23,11 @@
   document.head.appendChild(style);
 
   const inputs=document.querySelector('.inputs');
-  const results=document.querySelector('.results');
-  const exampleBanner=document.getElementById('exampleBanner');
-  if(!inputs||!results) return;
+  if(!inputs) return;
 
   const card=document.createElement('section');
   card.className='interpretation-card';
+  card.dataset.guide='6';
   card.innerHTML=`
     <div class="interpretation-head">
       <div class="interpretation-mark">INSIGHT</div>
@@ -41,14 +40,14 @@
     <div class="interpretation-next"><strong>Try this next</strong><span>Adjust your price, profit goal or paid client time above and see how your result changes.</span></div>`;
   inputs.appendChild(card);
 
-  function placeCard(){
-    const exampleActive=exampleBanner&&exampleBanner.classList.contains('active');
-    if(exampleActive){
-      if(card.parentElement!==results||card!==results.lastElementChild) results.appendChild(card);
-    }else if(card.parentElement!==inputs){
-      inputs.appendChild(card);
+  try{
+    if(Array.isArray(guideSteps) && !guideSteps.some(step=>step.title==='What your result means')){
+      guideSteps.push({
+        title:'What your result means',
+        text:'Use this final insight to understand whether your current price is below cost, covering costs but below your target, or supporting the profit goal you selected.'
+      });
     }
-  }
+  }catch(e){}
 
   function value(id){return Math.max(0,Number(document.getElementById(id)?.value)||0)}
   function getPosition(){
@@ -81,7 +80,6 @@
   }
 
   function updateInterpretation(){
-    placeCard();
     const message=document.getElementById('interpretationMessage');
     const position=getPosition();
     card.classList.remove('below-cost','below-recommended','on-target');
@@ -105,9 +103,5 @@
   observer.observe(document.getElementById('directRows'),{childList:true,subtree:true});
   observer.observe(document.getElementById('activityRows'),{childList:true,subtree:true});
   observer.observe(document.getElementById('overheadRows'),{childList:true,subtree:true});
-  if(exampleBanner){
-    const exampleObserver=new MutationObserver(updateInterpretation);
-    exampleObserver.observe(exampleBanner,{attributes:true,attributeFilter:['class']});
-  }
   updateInterpretation();
 })();
