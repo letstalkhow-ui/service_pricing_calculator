@@ -37,7 +37,7 @@ async function brevo(path, body, apiKey) {
   const response = await fetch(`${BREVO_API}${path}`, {
     method: 'POST',
     headers: {
-      'accept': 'application/json',
+      accept: 'application/json',
       'content-type': 'application/json',
       'api-key': apiKey
     },
@@ -55,7 +55,7 @@ async function brevo(path, body, apiKey) {
   return data;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return json(res, 405, { ok: false, error: 'Method not allowed.' });
@@ -143,4 +143,4 @@ export default async function handler(req, res) {
     });
     return json(res, 502, { ok: false, error: 'We could not email your result right now. Please try again shortly.' });
   }
-}
+};
