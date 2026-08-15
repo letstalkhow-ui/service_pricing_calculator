@@ -118,6 +118,8 @@
 
   function restoreSummary(){
     if(!left || !results || !summaryStep || !directCard || !monthlyCard || !nextCard || !leadCard) return;
+    nextCard.classList.remove('active');
+    leadCard.classList.remove('active');
     left.appendChild(summaryStep);
     results.appendChild(directCard);
     results.appendChild(monthlyCard);
