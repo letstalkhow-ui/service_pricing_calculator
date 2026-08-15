@@ -3,6 +3,8 @@
   "trailingSlash": false,
   "routes": [
     { "src": "^/$", "dest": "/api/preview-page" },
+    { "src": "^/tools/pricing$", "dest": "/api/preview-page" },
+    { "src": "^/tools/cost-estimator$", "dest": "/tools/cost-estimator.html" },
     { "handle": "filesystem" }
   ],
   "functions": {
