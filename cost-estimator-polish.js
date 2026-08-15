@@ -55,8 +55,8 @@
     .layout.summary-mode>div:first-child{width:100%}
     .layout.summary-mode>.results{display:none}
     .layout.summary-mode .summary-dashboard{display:grid;gap:18px}
-    .layout.summary-mode .summary-top{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(330px,.75fr);gap:18px;align-items:stretch}
-    .layout.summary-mode .summary-body{display:grid;grid-template-columns:minmax(0,.95fr) minmax(420px,1.05fr);gap:18px;align-items:start}
+    .layout.summary-mode .summary-top{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.8fr) minmax(280px,.8fr);gap:18px;align-items:stretch}
+    .layout.summary-mode .summary-body{display:grid;grid-template-columns:minmax(0,.85fr) minmax(460px,1.15fr);gap:18px;align-items:start}
     .layout.summary-mode .summary-left{display:grid;gap:18px}
     .layout.summary-mode .summary-top>.panel,.layout.summary-mode .summary-top>.result-card,.layout.summary-mode .summary-body .result-card{height:100%}
 
@@ -71,26 +71,29 @@
     .layout.summary-mode:not(.example-summary) .panel[data-step="4"] .nav .btn-yellow{display:none!important}
 
     .layout.summary-mode .summary-top .primary{display:flex;flex-direction:column;justify-content:center;min-height:190px}
+    .layout.summary-mode .summary-top .result-card:not(.primary){display:flex;flex-direction:column;justify-content:center;min-height:190px}
     .layout.summary-mode .summary-left>.result-card{height:auto}
     .layout.summary-mode #nextCard{display:block}
     .layout.summary-mode #leadCard{display:block;height:100%}
     .layout.summary-mode #leadCard form{display:grid}
 
     .layout.example-summary #nextCard,.layout.example-summary #leadCard{display:none!important}
-    .layout.example-summary .summary-body{grid-template-columns:1fr}
+    .layout.example-summary .summary-body{display:none}
     .layout.example-summary .estimator-context .example-actions{display:none}
 
-    @media(max-width:1050px){
+    @media(max-width:1180px){
       .layout.summary-mode .summary-top{grid-template-columns:1fr 1fr}
+      .layout.summary-mode .summary-top .panel[data-step="4"]{grid-column:1/-1}
       .layout.summary-mode .summary-body{grid-template-columns:1fr 1fr}
     }
     @media(max-width:760px){
       .estimator-context .example-banner.active{align-items:flex-start;flex-direction:column}
       .estimator-context .example-actions,.estimator-context .example-actions button{width:100%}
       .layout.summary-mode .summary-top,.layout.summary-mode .summary-body{grid-template-columns:1fr}
+      .layout.summary-mode .summary-top .panel[data-step="4"]{grid-column:auto}
       .layout.summary-mode .panel[data-step="4"]{padding:14px 16px}
       .layout.summary-mode .panel[data-step="4"] .section-head h2{font-size:19px}
-      .layout.summary-mode .summary-top .primary{min-height:0}
+      .layout.summary-mode .summary-top .primary,.layout.summary-mode .summary-top .result-card:not(.primary){min-height:0}
     }
   `;
   document.head.appendChild(style);
@@ -108,7 +111,7 @@
     if(!summaryDashboard.isConnected) left.appendChild(summaryDashboard);
     summaryTop.appendChild(summaryStep);
     summaryTop.appendChild(directCard);
-    summaryLeft.appendChild(monthlyCard);
+    summaryTop.appendChild(monthlyCard);
     summaryLeft.appendChild(nextCard);
     summaryBody.appendChild(leadCard);
   }
