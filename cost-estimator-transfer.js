@@ -5,6 +5,9 @@
   try{payload=JSON.parse(raw)}catch(_){localStorage.removeItem('bbCostEstimatorTransfer');return}
   if(!payload||payload.version!==1) return;
 
+  const guideWelcome=document.getElementById('guideWelcome');
+  if(guideWelcome) guideWelcome.classList.add('hidden');
+
   const style=document.createElement('style');
   style.textContent=`
     .cost-transfer-overlay{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.58);display:grid;place-items:center;padding:20px}
