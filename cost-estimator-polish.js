@@ -6,6 +6,8 @@
   const exampleBanner=document.getElementById('exampleBanner');
   const progressWrap=document.querySelector('.progress-wrap');
   const startButton=document.querySelector('.hero-actions .btn-primary');
+  const summaryStep=document.querySelector('.panel[data-step="4"]');
+  const summaryPrimary=summaryStep?summaryStep.querySelector('.nav .btn-yellow'):null;
 
   if(left && progressWrap){
     const context=document.createElement('div');
@@ -34,9 +36,8 @@
     .layout.summary-mode .results{position:static;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
     .layout.summary-mode .result-card{height:100%}
     .layout.summary-mode #leadCard{grid-column:1/-1;height:auto}
-    .layout.example-summary .panel[data-step="4"] .nav .btn-yellow{display:none!important}
     .layout.example-summary #nextCard,.layout.example-summary #leadCard{display:none!important}
-    .layout.example-summary .panel[data-step="4"] .nav{justify-content:flex-start}
+    .layout.example-summary .estimator-context .example-actions{display:none}
     @media(max-width:1100px){
       .layout.summary-mode .results{grid-template-columns:1fr 1fr}
       .layout.summary-mode #leadCard{grid-column:1/-1}
@@ -52,13 +53,6 @@
 
   function isExampleMode(){
     return !!(exampleBanner && exampleBanner.classList.contains('active'));
-  }
-
-  function syncSummaryLayout(){
-    const step4=document.querySelector('.panel[data-step="4"]');
-    const onSummary=!!(step4&&step4.classList.contains('active'));
-    estimator.classList.toggle('summary-mode',onSummary);
-    estimator.classList.toggle('example-summary',onSummary&&isExampleMode());
   }
 
   function resetEstimatorForOwnNumbers(){
@@ -96,6 +90,23 @@
     renderMonthly();
     goToStep(1);
     syncSummaryLayout();
+  }
+
+  function syncSummaryLayout(){
+    const onSummary=!!(summaryStep&&summaryStep.classList.contains('active'));
+    const exampleSummary=onSummary&&isExampleMode();
+    estimator.classList.toggle('summary-mode',onSummary);
+    estimator.classList.toggle('example-summary',exampleSummary);
+
+    if(summaryPrimary){
+      if(exampleSummary){
+        summaryPrimary.textContent='Use my own numbers';
+        summaryPrimary.onclick=resetEstimatorForOwnNumbers;
+      }else{
+        summaryPrimary.textContent='Use these costs in my Pricing Calculator';
+        summaryPrimary.onclick=sendToPricing;
+      }
+    }
   }
 
   if(startButton){
