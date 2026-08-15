@@ -30,7 +30,7 @@
     .welcome-actions .guide-primary{background:var(--yellow);color:#111;border:2px solid #111;box-shadow:0 5px 0 #111;font-size:14px}
     .welcome-actions .guide-primary:hover{transform:translateY(-1px)}
     .welcome-actions .guide-example{background:#fff;border:1px solid #cfc9bc}
-    .welcome-actions .guide-secondary{background:#fff;color:#555;border:1px solid #e3ded4}
+    .welcome-actions .guide-secondary{background:#fff;color:#333;border:1px solid #e3ded4;font-size:14px}
     @media(max-width:760px){
       .welcome-actions{grid-template-columns:1fr}
     }
@@ -43,7 +43,7 @@
       .welcome-actions{gap:10px;margin-top:20px}
       .welcome-actions button{min-height:50px}
       .welcome-actions .guide-primary{font-size:16px;min-height:56px}
-      .welcome-actions .guide-secondary{font-size:12px;background:transparent;border-style:dashed}
+      .welcome-actions .guide-secondary{font-size:14px;color:#333;background:transparent;border-style:dashed}
     }
   `;
   document.head.appendChild(style);
