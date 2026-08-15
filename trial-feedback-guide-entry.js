@@ -11,7 +11,7 @@
   const normal=welcome.querySelector('.guide-secondary');
 
   if(mark) mark.textContent='RECOMMENDED FOR FIRST-TIME USERS';
-  if(title) title.textContent='Not sure what to enter? Start here.';
+  if(title) title.innerHTML='Not sure what to enter? <span class="keep-together">Start here.</span>';
   if(copy) copy.textContent='Use the guided calculation and we will take you through each section step by step, in simple English. You can still change any number as you go.';
   if(primary) primary.textContent='Guide me step by step';
   if(example) example.textContent='Show me an example first';
@@ -23,6 +23,7 @@
     .welcome-card:before{content:'';position:absolute;left:0;right:0;top:0;height:8px;background:var(--yellow)}
     .welcome-mark{background:#111;color:var(--yellow);letter-spacing:.8px}
     .welcome-card h2{max-width:560px}
+    .welcome-card h2 .keep-together{white-space:nowrap}
     .welcome-card p{max-width:610px}
     .welcome-actions{align-items:stretch;display:grid;grid-template-columns:1.15fr 1fr 1.35fr}
     .welcome-actions button{width:100%;min-width:0;white-space:normal;line-height:1.25;text-align:center}
@@ -37,7 +38,7 @@
       .guide-welcome{padding:14px;align-items:center}
       .welcome-card{padding:28px 22px 22px;border-radius:18px}
       .welcome-mark{font-size:10px;line-height:1.25;text-align:center}
-      .welcome-card h2{font-size:28px;line-height:1.05;margin:16px 0 10px}
+      .welcome-card h2{font-size:27px;line-height:1.08;margin:16px 0 10px}
       .welcome-card p{font-size:15px;line-height:1.55}
       .welcome-actions{gap:10px;margin-top:20px}
       .welcome-actions button{min-height:50px}
