@@ -55,6 +55,13 @@
     return !!(exampleBanner && exampleBanner.classList.contains('active'));
   }
 
+  function forceStepOne(){
+    document.querySelectorAll('.panel').forEach(panel=>panel.classList.toggle('active',panel.dataset.step==='1'));
+    document.querySelectorAll('.step-pill').forEach((pill,i)=>pill.classList.toggle('active',i===0));
+    estimator.classList.remove('summary-mode','example-summary');
+    requestAnimationFrame(()=>estimator.scrollIntoView({behavior:'smooth',block:'start'}));
+  }
+
   function resetEstimatorForOwnNumbers(){
     estimateMode='both';
     direct=[{name:'',qty:1,unit:0}];
@@ -88,8 +95,8 @@
 
     renderDirect();
     renderMonthly();
-    goToStep(1);
-    syncSummaryLayout();
+    forceStepOne();
+    calc();
   }
 
   function syncSummaryLayout(){
@@ -101,12 +108,20 @@
     if(summaryPrimary){
       if(exampleSummary){
         summaryPrimary.textContent='Use my own numbers';
-        summaryPrimary.onclick=resetEstimatorForOwnNumbers;
       }else{
         summaryPrimary.textContent='Use these costs in my Pricing Calculator';
-        summaryPrimary.onclick=sendToPricing;
       }
     }
+  }
+
+  if(summaryPrimary){
+    summaryPrimary.addEventListener('click',function(event){
+      if(isExampleMode()){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        resetEstimatorForOwnNumbers();
+      }
+    },true);
   }
 
   if(startButton){
@@ -120,7 +135,11 @@
   }
 
   const useOwnNumbers=document.getElementById('useOwnNumbers');
-  if(useOwnNumbers) useOwnNumbers.addEventListener('click',resetEstimatorForOwnNumbers);
+  if(useOwnNumbers) useOwnNumbers.addEventListener('click',function(event){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    resetEstimatorForOwnNumbers();
+  },true);
 
   if(exampleBanner){
     new MutationObserver(syncSummaryLayout).observe(exampleBanner,{attributes:true,attributeFilter:['class']});
