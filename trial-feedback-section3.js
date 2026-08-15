@@ -2,6 +2,13 @@
   const section=document.querySelector('[data-guide="2"]');
   if(!section) return;
 
+  const style=document.createElement('style');
+  style.textContent=`
+    .time-scope-note{margin:0 0 22px!important}
+    @media(max-width:560px){.time-scope-note{margin-bottom:20px!important}}
+  `;
+  document.head.appendChild(style);
+
   const description=section.querySelector('.section-head p');
   if(description){
     description.textContent='Enter the time needed to deliver this service once for one client.';
