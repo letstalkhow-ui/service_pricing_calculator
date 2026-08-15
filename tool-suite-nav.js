@@ -18,6 +18,8 @@
     }
   }
 
+  if(badge) badge.remove();
+
   const style=document.createElement('style');
   style.textContent=`
     .brand-home{display:flex;align-items:center;flex:0 0 auto}
@@ -34,7 +36,6 @@
     @media(max-width:820px){
       .suite-right{gap:7px}
       .tool-suite-nav a{font-size:11px;padding:7px 8px}
-      .suite-right>.badge{display:none}
     }
     @media(max-width:620px){
       .topbar{gap:10px}
@@ -60,7 +61,6 @@
     const right=document.createElement('div');
     right.className='suite-right';
     right.appendChild(nav);
-    if(badge) right.appendChild(badge);
     topbar.appendChild(right);
   }
 
