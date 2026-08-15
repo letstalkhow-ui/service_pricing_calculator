@@ -55,48 +55,8 @@
     return !!(exampleBanner && exampleBanner.classList.contains('active'));
   }
 
-  function forceStepOne(){
-    document.querySelectorAll('.panel').forEach(panel=>panel.classList.toggle('active',panel.dataset.step==='1'));
-    document.querySelectorAll('.step-pill').forEach((pill,i)=>pill.classList.toggle('active',i===0));
-    estimator.classList.remove('summary-mode','example-summary');
-    requestAnimationFrame(()=>estimator.scrollIntoView({behavior:'smooth',block:'start'}));
-  }
-
-  function resetEstimatorForOwnNumbers(){
-    estimateMode='both';
-    direct=[{name:'',qty:1,unit:0}];
-    monthly=[{name:'',amount:0,freq:'monthly'}];
-
-    const service=document.getElementById('serviceName');
-    const currency=document.getElementById('currency');
-    if(service) service.value='';
-    if(currency) currency.value='MUR';
-
-    chooseEstimate('both');
-    if(exampleBanner) exampleBanner.classList.remove('active');
-
-    document.querySelectorAll('.helper.open').forEach(helper=>{
-      helper.classList.remove('open');
-      const toggle=helper.querySelector('button');
-      if(toggle && toggle.lastElementChild) toggle.lastElementChild.textContent='+';
-    });
-
-    const leadForm=document.getElementById('leadForm');
-    if(leadForm) leadForm.reset();
-    const formStatus=document.getElementById('formStatus');
-    if(formStatus){formStatus.textContent='';formStatus.className='status'}
-    const sendBtn=document.getElementById('sendBtn');
-    if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send my cost summary'}
-
-    const nextCard=document.getElementById('nextCard');
-    const leadCard=document.getElementById('leadCard');
-    if(nextCard) nextCard.classList.remove('active');
-    if(leadCard) leadCard.classList.remove('active');
-
-    renderDirect();
-    renderMonthly();
-    forceStepOne();
-    calc();
+  function startFresh(){
+    window.location.replace('/tools/cost-estimator?start=fresh');
   }
 
   function syncSummaryLayout(){
@@ -106,11 +66,7 @@
     estimator.classList.toggle('example-summary',exampleSummary);
 
     if(summaryPrimary){
-      if(exampleSummary){
-        summaryPrimary.textContent='Use my own numbers';
-      }else{
-        summaryPrimary.textContent='Use these costs in my Pricing Calculator';
-      }
+      summaryPrimary.textContent=exampleSummary?'Use my own numbers':'Use these costs in my Pricing Calculator';
     }
   }
 
@@ -119,7 +75,7 @@
       if(isExampleMode()){
         event.preventDefault();
         event.stopImmediatePropagation();
-        resetEstimatorForOwnNumbers();
+        startFresh();
       }
     },true);
   }
@@ -129,17 +85,19 @@
       if(isExampleMode()){
         event.preventDefault();
         event.stopImmediatePropagation();
-        resetEstimatorForOwnNumbers();
+        startFresh();
       }
     },true);
   }
 
   const useOwnNumbers=document.getElementById('useOwnNumbers');
-  if(useOwnNumbers) useOwnNumbers.addEventListener('click',function(event){
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    resetEstimatorForOwnNumbers();
-  },true);
+  if(useOwnNumbers){
+    useOwnNumbers.addEventListener('click',function(event){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      startFresh();
+    },true);
+  }
 
   if(exampleBanner){
     new MutationObserver(syncSummaryLayout).observe(exampleBanner,{attributes:true,attributeFilter:['class']});
