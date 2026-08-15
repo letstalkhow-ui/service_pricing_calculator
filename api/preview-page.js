@@ -42,7 +42,7 @@ module.exports = function handler(req, res) {
       }
     </style></head>`);
 
-    html = html.replace('</body>', '<script src="/lead-capture.js"></script><script src="/interpretation-card.js"></script><script src="/guided-mode-polish.js"></script><script src="/trial-feedback-section3.js"></script><script src="/trial-feedback-guide-entry.js"></script><script src="/trial-feedback-cost-helper.js"></script><script src="/cost-estimator-transfer.js"></script></body>');
+    html = html.replace('</body>', '<script src="/lead-capture.js"></script><script src="/interpretation-card.js"></script><script src="/guided-mode-polish.js"></script><script src="/trial-feedback-section3.js"></script><script src="/trial-feedback-guide-entry.js"></script><script src="/trial-feedback-cost-helper.js"></script><script src="/cost-estimator-transfer.js"></script><script src="/tool-suite-nav.js"></script></body>');
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.status(200).send(html);
