@@ -36,6 +36,8 @@
     .layout.summary-mode .results{position:static;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
     .layout.summary-mode .result-card{height:100%}
     .layout.summary-mode #leadCard{grid-column:1/-1;height:auto}
+    .layout.summary-mode:not(.example-summary) .panel[data-step="4"] .nav .btn-yellow{display:none!important}
+    .layout.summary-mode:not(.example-summary) .panel[data-step="4"] .nav{justify-content:flex-start}
     .layout.example-summary #nextCard,.layout.example-summary #leadCard{display:none!important}
     .layout.example-summary .estimator-context .example-actions{display:none}
     @media(max-width:1100px){
