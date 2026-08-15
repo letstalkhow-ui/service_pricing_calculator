@@ -32,7 +32,17 @@
     .estimator-context .progress-wrap{padding:0;width:100%;margin:0}
     .estimator-context .progress{max-width:none;width:100%}
     .helper button:focus,.helper button:focus-visible{outline:none!important;box-shadow:none!important}
+
     .layout.summary-mode{grid-template-columns:1fr}
+    .layout.summary-mode .panel[data-step="4"]{padding:16px 20px}
+    .layout.summary-mode .panel[data-step="4"] .section-head{margin-bottom:10px;gap:11px;align-items:flex-start}
+    .layout.summary-mode .panel[data-step="4"] .section-head b{padding:5px 7px;font-size:12px;border-radius:7px}
+    .layout.summary-mode .panel[data-step="4"] .section-head h2{font-size:21px;line-height:1.15;margin:0 0 3px}
+    .layout.summary-mode .panel[data-step="4"] .section-head p{font-size:12px;line-height:1.4}
+    .layout.summary-mode .panel[data-step="4"] .notice{margin-top:8px;padding:9px 11px;font-size:11px;line-height:1.4}
+    .layout.summary-mode .panel[data-step="4"] .nav{margin-top:12px}
+    .layout.summary-mode .panel[data-step="4"] .btn{padding:9px 13px;font-size:13px}
+
     .layout.summary-mode .results{position:static;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
     .layout.summary-mode .result-card{height:100%}
     .layout.summary-mode #leadCard{grid-column:1/-1;height:auto}
@@ -47,6 +57,8 @@
     @media(max-width:760px){
       .estimator-context .example-banner.active{align-items:flex-start;flex-direction:column}
       .estimator-context .example-actions,.estimator-context .example-actions button{width:100%}
+      .layout.summary-mode .panel[data-step="4"]{padding:14px 16px}
+      .layout.summary-mode .panel[data-step="4"] .section-head h2{font-size:19px}
       .layout.summary-mode .results{grid-template-columns:1fr}
       .layout.summary-mode #leadCard{grid-column:1}
     }
