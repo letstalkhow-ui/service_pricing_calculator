@@ -106,6 +106,17 @@
     window.location.replace('/tools/cost-estimator?start=fresh');
   }
 
+  function hasWorkingData(){
+    const serviceName=document.getElementById('serviceName');
+    const directTotal=document.getElementById('resultDirect');
+    const monthlyTotal=document.getElementById('resultMonthly');
+    const serviceHasValue=!!(serviceName&&serviceName.value.trim());
+    const directHasValue=!!(directTotal&&!/\b0\s*$/.test(directTotal.textContent.trim()));
+    const monthlyHasValue=!!(monthlyTotal&&!/\b0\s*$/.test(monthlyTotal.textContent.trim()));
+    const notOnFirstStep=!!document.querySelector('.panel.active:not([data-step="1"])');
+    return serviceHasValue||directHasValue||monthlyHasValue||notOnFirstStep||isExampleMode();
+  }
+
   function mountSummary(){
     if(!left || !summaryStep || !directCard || !monthlyCard || !nextCard || !leadCard) return;
     if(!summaryDashboard.isConnected) left.appendChild(summaryDashboard);
@@ -154,7 +165,7 @@
 
   if(startButton){
     startButton.addEventListener('click',function(event){
-      if(isExampleMode()){
+      if(hasWorkingData()){
         event.preventDefault();
         event.stopImmediatePropagation();
         startFresh();
