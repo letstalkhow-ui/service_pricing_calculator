@@ -7,7 +7,6 @@
   const progressWrap=document.querySelector('.progress-wrap');
   const startButton=document.querySelector('.hero-actions .btn-primary');
 
-  // Keep context visible with every estimator step instead of leaving it above the scrolled workflow.
   if(left && progressWrap){
     const context=document.createElement('div');
     context.className='estimator-context';
@@ -35,6 +34,9 @@
     .layout.summary-mode .results{position:static;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
     .layout.summary-mode .result-card{height:100%}
     .layout.summary-mode #leadCard{grid-column:1/-1;height:auto}
+    .layout.example-summary .panel[data-step="4"] .nav .btn-yellow{display:none!important}
+    .layout.example-summary #nextCard,.layout.example-summary #leadCard{display:none!important}
+    .layout.example-summary .panel[data-step="4"] .nav{justify-content:flex-start}
     @media(max-width:1100px){
       .layout.summary-mode .results{grid-template-columns:1fr 1fr}
       .layout.summary-mode #leadCard{grid-column:1/-1}
@@ -48,9 +50,15 @@
   `;
   document.head.appendChild(style);
 
+  function isExampleMode(){
+    return !!(exampleBanner && exampleBanner.classList.contains('active'));
+  }
+
   function syncSummaryLayout(){
     const step4=document.querySelector('.panel[data-step="4"]');
-    estimator.classList.toggle('summary-mode',!!(step4&&step4.classList.contains('active')));
+    const onSummary=!!(step4&&step4.classList.contains('active'));
+    estimator.classList.toggle('summary-mode',onSummary);
+    estimator.classList.toggle('example-summary',onSummary&&isExampleMode());
   }
 
   function resetEstimatorForOwnNumbers(){
@@ -87,11 +95,12 @@
     renderDirect();
     renderMonthly();
     goToStep(1);
+    syncSummaryLayout();
   }
 
   if(startButton){
     startButton.addEventListener('click',function(event){
-      if(exampleBanner && exampleBanner.classList.contains('active')){
+      if(isExampleMode()){
         event.preventDefault();
         event.stopImmediatePropagation();
         resetEstimatorForOwnNumbers();
@@ -102,6 +111,9 @@
   const useOwnNumbers=document.getElementById('useOwnNumbers');
   if(useOwnNumbers) useOwnNumbers.addEventListener('click',resetEstimatorForOwnNumbers);
 
+  if(exampleBanner){
+    new MutationObserver(syncSummaryLayout).observe(exampleBanner,{attributes:true,attributeFilter:['class']});
+  }
   const observer=new MutationObserver(syncSummaryLayout);
   document.querySelectorAll('.panel').forEach(panel=>observer.observe(panel,{attributes:true,attributeFilter:['class']}));
   syncSummaryLayout();
