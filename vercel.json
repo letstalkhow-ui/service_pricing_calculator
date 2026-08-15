@@ -4,12 +4,15 @@
   "routes": [
     { "src": "^/$", "dest": "/api/preview-page" },
     { "src": "^/tools/pricing$", "dest": "/api/preview-page" },
-    { "src": "^/tools/cost-estimator$", "dest": "/tools/cost-estimator.html" },
+    { "src": "^/tools/cost-estimator$", "dest": "/api/cost-estimator-page" },
     { "handle": "filesystem" }
   ],
   "functions": {
     "api/preview-page.js": {
       "includeFiles": "index.html"
+    },
+    "api/cost-estimator-page.js": {
+      "includeFiles": "tools/cost-estimator.html"
     }
   }
 }
