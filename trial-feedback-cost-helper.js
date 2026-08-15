@@ -5,7 +5,8 @@
   const style=document.createElement('style');
   style.textContent=`
     .cost-helper{margin:0 0 18px;border:1px solid #e5dfd2;border-radius:12px;background:#fffdf7;overflow:hidden}
-    .cost-helper-toggle{width:100%;border:0;background:transparent;color:#111;padding:13px 14px;font-weight:800;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .cost-helper-toggle{width:100%;border:0;background:transparent;color:#111;padding:13px 14px;font-weight:800;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;outline:none}
+    .cost-helper-toggle:focus,.cost-helper-toggle:focus-visible{outline:none!important;box-shadow:none!important}
     .cost-helper-toggle span:last-child{font-size:18px;line-height:1}
     .cost-helper-body{display:none;padding:0 14px 14px;color:#555;font-size:13px;line-height:1.55}
     .cost-helper.open .cost-helper-body{display:block}
