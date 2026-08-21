@@ -2,12 +2,15 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "routes": [
-    { "src": "^/$", "dest": "/api/preview-page" },
+    { "src": "^/$", "dest": "/api/homepage-page" },
     { "src": "^/tools/pricing$", "dest": "/api/preview-page" },
     { "src": "^/tools/cost-estimator$", "dest": "/api/cost-estimator-page" },
     { "handle": "filesystem" }
   ],
   "functions": {
+    "api/homepage-page.js": {
+      "includeFiles": "homepage.html"
+    },
     "api/preview-page.js": {
       "includeFiles": "index.html"
     },
