@@ -1052,6 +1052,7 @@ section{padding:72px 0}.eco-board{grid-template-columns:1fr 1fr;grid-template-ro
 
   gtag('config', 'G-LY70ES2ST8');
 </script>
+<script defer src="/analytics-events.js"></script>
   </head>
 <body>
 <nav class="nav">
@@ -1278,5 +1279,14 @@ section{padding:72px 0}.eco-board{grid-template-columns:1fr 1fr;grid-template-ro
     </div>
   </div>
 </footer>
+<script>
+document.addEventListener('click',function(event){
+  const link=event.target.closest('a[href="/tools/pricing"],a[href="/tools/cost-estimator"]');
+  if(!link||!window.BBAnalytics) return;
+  const toolName=link.getAttribute('href')==='/tools/pricing'?'service_pricing_calculator':'business_cost_estimator';
+  const location=link.closest('.hero')?'hero':link.closest('.tools')?'tools_section':link.closest('footer')?'footer':'homepage';
+  window.BBAnalytics.track('homepage_tool_open',{tool_name:toolName,link_location:location});
+});
+</script>
 </body>
 </html>

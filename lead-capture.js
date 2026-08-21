@@ -122,6 +122,10 @@
       status.className='lead-status success';
       status.textContent='Your result is on its way. Check your inbox shortly.';
       submit.textContent='Result sent';
+      if(window.BBAnalytics) window.BBAnalytics.track('email_result_requested',{
+        tool_name:'service_pricing_calculator',
+        result_type:'pricing_result'
+      });
     }catch(err){
       status.className='lead-status error';
       status.textContent=err.message||'We could not email your result right now. Please try again shortly.';
