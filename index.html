@@ -7,6 +7,15 @@
   };
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LY70ES2ST8"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LY70ES2ST8');
+</script>
 </head><body>
 <div class="guide-welcome" id="guideWelcome"><div class="welcome-card"><span class="welcome-mark">GUIDED CALCULATION</span><h2>New to service pricing?</h2><p>We can guide you through the calculator step by step and explain what to enter in simple English. You do not need accounting knowledge.</p><div class="welcome-actions"><button class="guide-primary" onclick="startGuide()">Start guided calculation</button><button class="guide-example" onclick="loadExample()">See an example</button><button class="guide-secondary" onclick="useNormally()">I’ll calculate on my own</button></div></div></div>
 <div class="guide-bar" id="guideBar"><div class="guide-bar-inner"><div class="guide-progress" id="guideProgress">Step 1 of 6</div><div class="guide-copy"><strong id="guideTitle"></strong><span id="guideText"></span></div><div class="guide-controls"><button class="guide-secondary" onclick="prevGuide()" id="guideBack">Back</button><button class="guide-primary" onclick="nextGuide()" id="guideNext">Next</button><button class="guide-secondary" onclick="endGuide()">Skip guide</button></div></div></div>
