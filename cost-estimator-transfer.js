@@ -47,6 +47,11 @@
       if(payload.serviceName&&document.getElementById('service')) document.getElementById('service').value=payload.serviceName;
       if(payload.currency&&document.getElementById('currency')) document.getElementById('currency').value=payload.currency;
       if(typeof render==='function') render();
+      if(window.BBAnalytics) window.BBAnalytics.trackOnce('cost_transfer_to_pricing',{
+        source_tool:'business_cost_estimator',
+        destination_tool:'service_pricing_calculator',
+        currency:payload.currency||'MUR'
+      });
       localStorage.removeItem('bbCostEstimatorTransfer');
       close();
       const toast=document.createElement('div');toast.className='cost-transfer-toast';toast.innerHTML='<strong>Your estimated costs have been added.</strong><span>Review Sections 2 and 4 before continuing with your pricing calculation.</span>';document.body.appendChild(toast);requestAnimationFrame(()=>toast.classList.add('active'));setTimeout(()=>{toast.classList.remove('active');setTimeout(()=>toast.remove(),250)},4200);
