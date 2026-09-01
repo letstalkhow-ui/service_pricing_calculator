@@ -132,7 +132,7 @@ module.exports = async function handler(req, res) {
 
     const brandedHtmlContent = htmlContent.replace(
       '<div style="font-weight:900;font-size:22px">BusinessBoosts</div>',
-      '<img src="https://www.businessboosts.io/assets/businessboosts-email-logo.png" width="207" height="72" alt="BusinessBoosts" style="display:block;width:207px;max-width:100%;height:auto">'
+      '<img src="https://www.businessboosts.io/assets/businessboosts-email-logo.png?v=2" width="207" height="72" alt="BusinessBoosts" style="display:block;width:207px;max-width:100%;height:auto">'
     ).replace(
       'This calculator provides estimates for general business decision support',
       'You received this transactional email because you requested your pricing result. Marketing preferences apply separately. This calculator provides estimates for general business decision support'
