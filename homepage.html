@@ -1046,6 +1046,52 @@ section{padding:72px 0}.eco-board{grid-template-columns:1fr 1fr;grid-template-ro
   }
 }
 
+
+/* Mobile-first homepage hierarchy: value proposition, ecosystem, then tools */
+.mobile-ecosystem{display:none}
+.hero-tool-shortcuts{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.hero-tool-shortcuts a{font-size:13px;font-weight:850;text-decoration:underline;text-decoration-color:var(--yellow);text-decoration-thickness:3px;text-underline-offset:5px}
+
+@media(min-width:981px){
+  .hero-left{grid-column:1;grid-row:1}
+  .hero-right{grid-column:2;grid-row:1}
+}
+
+@media(max-width:760px){
+  .hero{padding:14px 0 24px}
+  .hero-shell{display:flex;flex-direction:column;min-height:0;border-radius:26px}
+  .hero-right{order:1;min-height:calc(100svh - 104px);padding:38px 26px 34px;justify-content:center}
+  .hero-right h1{font-size:clamp(46px,13vw,58px);line-height:.91;margin:24px 0 22px}
+  .hero-right p{font-size:18px;line-height:1.5;margin-bottom:26px}
+  .hero-right .actions .btn{width:100%}
+  .hero-proof{display:none}
+  .hero-tool-shortcuts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+  .hero-tool-shortcuts a{display:flex;align-items:center;justify-content:center;min-height:45px;padding:8px 10px;border:1px solid var(--line);border-radius:14px;text-align:center;font-size:12px;line-height:1.2;text-decoration:none}
+
+  .hero-left{order:2;display:block;min-height:0;padding:18px;background:var(--black);scroll-margin-top:86px}
+  .hero-left>.hero-card{display:none}
+  .mobile-ecosystem{display:block;color:#fff;padding:18px 0 4px}
+  .mobile-ecosystem .kicker{color:#fff;font-size:10px}
+  .mobile-ecosystem h2{font-size:clamp(38px,11vw,50px);line-height:.96;letter-spacing:-.055em;margin:24px 0 18px}
+  .mobile-ecosystem-intro{color:#c8c8c8;font-size:16px;line-height:1.5;margin:0 0 26px}
+  .mobile-signal-list{display:grid;gap:10px}
+  .mobile-signal{border:1px solid rgba(255,255,255,.14);border-radius:18px;background:#1b1b1b;overflow:hidden}
+  .mobile-signal[open]{border-color:rgba(252,199,12,.7)}
+  .mobile-signal summary{list-style:none;display:grid;grid-template-columns:26px minmax(0,1fr) auto 18px;align-items:center;gap:10px;min-height:68px;padding:14px 15px;cursor:pointer}
+  .mobile-signal summary::-webkit-details-marker{display:none}
+  .mobile-signal summary span{color:#969696;font-size:10px;font-weight:900;letter-spacing:.12em}
+  .mobile-signal summary strong{font-size:19px;letter-spacing:-.025em}
+  .mobile-signal summary small{padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.09);color:#d0d0d0;font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+  .mobile-signal.signal-pricing summary small,.mobile-signal.signal-costs summary small{background:var(--yellow);color:var(--black)}
+  .mobile-signal summary i{display:block;width:10px;height:10px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s ease}
+  .mobile-signal[open] summary i{transform:rotate(225deg) translate(-1px,-1px)}
+  .mobile-signal-panel{padding:0 15px 18px 51px;border-top:1px solid rgba(255,255,255,.09)}
+  .mobile-signal-panel h3{font-size:24px;line-height:1.05;letter-spacing:-.035em;margin:18px 0 10px}
+  .mobile-signal-panel p{color:#c8c8c8;font-size:14px;line-height:1.5;margin:0}
+  .mobile-signal-panel a{display:inline-flex;margin-top:16px;padding:10px 14px;border-radius:999px;background:var(--yellow);color:var(--black);font-size:12px;font-weight:900}
+  .ecosystem#ecosystem-details{display:none}
+}
+
 </style>
 <script>
   window.va = window.va || function () {
@@ -1078,7 +1124,64 @@ section{padding:72px 0}.eco-board{grid-template-columns:1fr 1fr;grid-template-ro
 <header class="hero">
 <div class="wrap">
 <div class="hero-shell">
-<div class="hero-left">
+<div class="hero-right">
+<div>
+<div class="kicker">Business clarity, made practical</div>
+<h1>Know your numbers. Run your business better.</h1>
+<p>Simple, free tools that turn everyday business numbers into clearer decisions.</p>
+<div class="actions"><a class="btn btn-black" href="#tools">Explore free tools</a></div>
+<div class="hero-tool-shortcuts" aria-label="Open a free BusinessBoosts tool">
+  <a href="/tools/pricing">Price my service</a>
+  <a href="/tools/cost-estimator">Estimate my costs</a>
+</div>
+</div>
+<div class="hero-proof">
+  <div class="proof-card proof-start">
+    <div class="proof-top"><small>01</small></div>
+    <strong>Start free</strong>
+    <span>No payment required</span>
+  </div>
+  <div class="proof-card proof-simple">
+    <div class="proof-top"><small>02</small></div>
+    <strong>No finance degree</strong>
+    <span>Simple to understand</span>
+  </div>
+  <div class="proof-card proof-founders">
+    <div class="proof-top"><small>03</small></div>
+    <strong>Built for founders</strong>
+    <span>Made for real business decisions</span>
+  </div>
+</div>
+</div>
+<div class="hero-left" id="ecosystem">
+<div class="mobile-ecosystem">
+  <div class="kicker">The BusinessBoosts ecosystem</div>
+  <h2>One ecosystem, built around business clarity.</h2>
+  <p class="mobile-ecosystem-intro">Choose the business area you want to understand. Open one option at a time to see what BusinessBoosts can help you do.</p>
+
+  <div class="mobile-signal-list">
+    <details class="mobile-signal signal-pricing">
+      <summary><span>01</span><strong>Pricing</strong><small>Free tool</small><i aria-hidden="true"></i></summary>
+      <div class="mobile-signal-panel"><h3>Know what to charge.</h3><p>Compare your current price with a suggested price based on your costs and target margin.</p><a href="/tools/pricing">Price my service</a></div>
+    </details>
+    <details class="mobile-signal signal-costs">
+      <summary><span>02</span><strong>Costs</strong><small>Free tool</small><i aria-hidden="true"></i></summary>
+      <div class="mobile-signal-panel"><h3>See what it really costs.</h3><p>Organise direct costs and monthly expenses to understand what your service and business require.</p><a href="/tools/cost-estimator">Estimate my costs</a></div>
+    </details>
+    <details class="mobile-signal signal-margin">
+      <summary><span>03</span><strong>Margin</strong><small>Coming soon</small><i aria-hidden="true"></i></summary>
+      <div class="mobile-signal-panel"><h3>Protect what you keep.</h3><p>Understand how much value remains after costs and whether your margin gives the business enough protection.</p></div>
+    </details>
+    <details class="mobile-signal signal-cash">
+      <summary><span>04</span><strong>Cash</strong><small>Coming soon</small><i aria-hidden="true"></i></summary>
+      <div class="mobile-signal-panel"><h3>Know what is available.</h3><p>See expected cash movement, upcoming commitments and potential pressure points.</p></div>
+    </details>
+    <details class="mobile-signal signal-visibility">
+      <summary><span>05</span><strong>Visibility</strong><small>Founder toolkit</small><i aria-hidden="true"></i></summary>
+      <div class="mobile-signal-panel"><h3>See the business more clearly.</h3><p>Bring the essential numbers together so you can decide what deserves attention next.</p></div>
+    </details>
+  </div>
+</div>
 <a class="hero-card hero-pricing interactive" href="/tools/pricing" aria-label="Open Service Pricing Calculator">
   <div class="hero-card-top"><div class="label">Pricing</div><h3>Know what to charge.</h3></div>
   <div class="hero-reveal pricing-reveal">
@@ -1127,31 +1230,6 @@ section{padding:72px 0}.eco-board{grid-template-columns:1fr 1fr;grid-template-ro
     </div>
   </div>
   <div class="hero-bars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-</div>
-</div>
-<div class="hero-right">
-<div>
-<div class="kicker">Business clarity, made practical</div>
-<h1>Know your numbers. Run your business better.</h1>
-<p>Simple, free tools that turn everyday business numbers into clearer decisions.</p>
-<div class="actions"><a class="btn btn-black" href="#tools">Explore free tools</a></div>
-</div>
-<div class="hero-proof">
-  <div class="proof-card proof-start">
-    <div class="proof-top"><small>01</small></div>
-    <strong>Start free</strong>
-    <span>No payment required</span>
-  </div>
-  <div class="proof-card proof-simple">
-    <div class="proof-top"><small>02</small></div>
-    <strong>No finance degree</strong>
-    <span>Simple to understand</span>
-  </div>
-  <div class="proof-card proof-founders">
-    <div class="proof-top"><small>03</small></div>
-    <strong>Built for founders</strong>
-    <span>Made for real business decisions</span>
-  </div>
 </div>
 </div>
 </div>
@@ -1213,7 +1291,7 @@ section{padding:72px 0}.eco-board{grid-template-columns:1fr 1fr;grid-template-ro
 </div>
 </section>
 
-<section class="ecosystem" id="ecosystem">
+<section class="ecosystem" id="ecosystem-details">
 <div class="wrap">
 <div class="eco-title">
 <h2>One ecosystem, built around business clarity.</h2>
@@ -1290,6 +1368,15 @@ section{padding:72px 0}.eco-board{grid-template-columns:1fr 1fr;grid-template-ro
   </div>
 </footer>
 <script>
+document.querySelectorAll('.mobile-signal').forEach(function(signal){
+  signal.addEventListener('toggle',function(){
+    if(!signal.open) return;
+    signal.parentElement.querySelectorAll('.mobile-signal[open]').forEach(function(other){
+      if(other!==signal) other.open=false;
+    });
+  });
+});
+
 document.addEventListener('click',function(event){
   const link=event.target.closest('a[href="/tools/pricing"],a[href="/tools/cost-estimator"]');
   if(!link||!window.BBAnalytics) return;
