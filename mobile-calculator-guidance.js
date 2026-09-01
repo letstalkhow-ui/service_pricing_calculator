@@ -6,13 +6,13 @@
   style.textContent = `
     .bb-row-field{display:contents}
     .bb-row-field>span{display:none}
-    .bb-pricing-guidance .inline-label{position:relative}
+    .bb-pricing-guidance .bb-tip-host{position:relative}
     .bb-pricing-guidance .tip:hover+.tiptext,
     .bb-pricing-guidance .tip:focus+.tiptext,
     .bb-pricing-guidance .tip.open+.tiptext{display:block}
     @media(max-width:560px){
-      .bb-pricing-guidance .inline-label{display:grid;grid-template-columns:1fr 18px;width:100%;align-items:center}
-      .bb-pricing-guidance .inline-label .tiptext{position:static;grid-column:1/-1;width:100%;max-width:none;margin-top:6px}
+      .bb-pricing-guidance .bb-tip-host{display:grid!important;grid-template-columns:minmax(0,1fr) 18px;width:100%;min-width:0;align-items:start}
+      .bb-pricing-guidance .bb-tip-host>.tiptext{position:static;grid-column:1/-1;width:100%;max-width:none;margin-top:6px}
       .bb-pricing-guidance .bb-row-field{display:grid;grid-column:1;gap:5px}
       .bb-pricing-guidance .bb-row-field>span{display:block;font-size:11px;letter-spacing:.04em;color:#777}
     }
@@ -45,7 +45,9 @@
   function improveTooltips() {
     document.querySelectorAll('.tip').forEach(tip => {
       const explanation = tip.querySelector('.tiptext');
-      if (explanation) tip.after(explanation);
+      if (!explanation) return;
+      tip.parentElement.classList.add('bb-tip-host');
+      tip.after(explanation);
     });
   }
 
