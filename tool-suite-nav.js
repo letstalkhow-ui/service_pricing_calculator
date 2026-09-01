@@ -7,7 +7,7 @@
   const badge=topbar?topbar.querySelector('.badge'):null;
 
   if(logo){
-    logo.src='/assets/businessboosts-logo-dark.svg';
+    logo.src='/assets/businessboosts-logo-transparent.png?v=1';
     if(!logo.parentElement.matches('a')){
       const link=document.createElement('a');
       link.href='/';
