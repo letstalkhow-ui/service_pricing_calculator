@@ -37,7 +37,8 @@
         <label>Business type <span style="font-weight:400;color:#888">(optional)</span><select id="leadBusinessType"><option value="">Choose one</option><option>Solo / Freelancer</option><option>Service Business</option><option>Agency / Consultancy</option><option>Retail / Product Business</option><option>Other</option></select></label>
         <label class="lead-hp" aria-hidden="true">Website<input id="leadWebsite" tabindex="-1" autocomplete="off"></label>
       </div>
-      <label class="lead-consent"><input id="leadConsent" type="checkbox" required><span>By requesting your result, you agree to receive your calculator summary and occasional BusinessBoosts tools, insights and offers by email. You can unsubscribe at any time.</span></label>
+      <label class="lead-consent"><input id="leadResultConsent" type="checkbox" required><span>I agree that BusinessBoosts may process these details to email the pricing result I requested.</span></label>
+      <label class="lead-consent"><input id="leadMarketingConsent" type="checkbox"><span>Also send me occasional BusinessBoosts tools, insights and offers. This is optional, and I can unsubscribe at any time.</span></label>
       <button class="lead-submit" id="leadSubmit" type="submit">Send my pricing result</button>
       <div id="leadStatus" class="lead-status" role="status" aria-live="polite"></div>
     </form>`;
@@ -113,6 +114,8 @@
           email:document.getElementById('leadEmail').value.trim(),
           company:document.getElementById('leadCompany').value.trim(),
           businessType:document.getElementById('leadBusinessType').value,
+          resultConsent:document.getElementById('leadResultConsent').checked,
+          marketingConsent:document.getElementById('leadMarketingConsent').checked,
           website:document.getElementById('leadWebsite').value,
           ...result
         })

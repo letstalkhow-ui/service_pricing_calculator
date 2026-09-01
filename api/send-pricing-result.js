@@ -83,9 +83,14 @@ module.exports = async function handler(req, res) {
   const breakEvenPrice = cleanNumber(body.breakEvenPrice);
   const priceGap = cleanNumber(body.priceGap);
   const pricingStatus = cleanText(body.pricingStatus, 80);
+  const resultConsent = body.resultConsent === true;
+  const marketingConsent = body.marketingConsent === true;
 
   if (!firstName || !isEmail(email)) {
     return json(res, 400, { ok: false, error: 'Please enter your first name and a valid email address.' });
+  }
+  if (!resultConsent) {
+    return json(res, 400, { ok: false, error: 'Please confirm that we may process your details to email your result.' });
   }
   if (suggestedPrice === null || breakEvenPrice === null) {
     return json(res, 400, { ok: false, error: 'Please complete the calculator before emailing your result.' });
@@ -112,7 +117,7 @@ module.exports = async function handler(req, res) {
     await brevo('/contacts', {
       email,
       attributes,
-      listIds: [listId],
+      ...(marketingConsent ? { listIds: [listId] } : {}),
       updateEnabled: true
     }, apiKey);
 
@@ -125,12 +130,20 @@ module.exports = async function handler(req, res) {
 
     const htmlContent = `<!doctype html><html><body style="margin:0;background:#faf8f2;font-family:Arial,Helvetica,sans-serif;color:#111"><div style="max-width:620px;margin:0 auto;padding:28px 18px"><div style="background:#fcc70c;padding:20px 22px;border-radius:14px 14px 0 0"><div style="font-weight:900;font-size:22px">BusinessBoosts</div><div style="font-size:13px;margin-top:4px">Service Pricing Calculator</div></div><div style="background:#fff;padding:26px 22px;border:1px solid #e7e2d7;border-top:0;border-radius:0 0 14px 14px"><p style="margin-top:0">Hi ${escapeHtml(firstName)},</p><p style="line-height:1.6;color:#555">Here is the pricing summary you requested for <strong>${escapeHtml(serviceName)}</strong>.</p><div style="background:#111;color:#fff;border-radius:12px;padding:20px;margin:22px 0"><div style="font-size:11px;letter-spacing:1px;color:#bbb;font-weight:700">${pricingMode === 'Hourly' ? 'SUGGESTED HOURLY RATE' : 'SUGGESTED PRICE'}</div><div style="font-size:34px;font-weight:900;color:#ffd500;margin-top:6px">${escapeHtml(money(currency, suggestedPrice))}${pricingMode === 'Hourly' ? ' / hour' : ''}</div></div><table style="width:100%;border-collapse:collapse;font-size:14px"><tr><td style="padding:9px 0;color:#666">Price that covers all costs</td><td style="padding:9px 0;text-align:right;font-weight:700">${escapeHtml(money(currency, breakEvenPrice))}${pricingMode === 'Hourly' ? ' / hour' : ''}</td></tr>${currentRow}${statusRow}</table><p style="line-height:1.6;color:#555;margin-top:24px">Use these figures as a decision guide, then test your price against your market, positioning and delivery capacity.</p><p style="line-height:1.6;color:#555">You can return to the calculator at any time to test a different price, cost structure or profit goal.</p><p style="margin-bottom:0"><strong>BusinessBoosts</strong><br><span style="color:#777;font-size:13px">Practical systems for clearer business decisions.</span></p></div><p style="font-size:11px;line-height:1.5;color:#888;padding:10px 4px">This calculator provides estimates for general business decision support and does not constitute accounting, tax, legal or financial advice.</p></div></body></html>`;
 
+    const brandedHtmlContent = htmlContent.replace(
+      '<div style="font-weight:900;font-size:22px">BusinessBoosts</div>',
+      '<img src="https://www.businessboosts.io/assets/businessboosts-email-logo.png" width="207" height="72" alt="BusinessBoosts" style="display:block;width:207px;max-width:100%;height:auto">'
+    ).replace(
+      'This calculator provides estimates for general business decision support',
+      'You received this transactional email because you requested your pricing result. Marketing preferences apply separately. This calculator provides estimates for general business decision support'
+    );
+
     await brevo('/smtp/email', {
       sender: { name: 'BusinessBoosts', email: senderEmail },
       replyTo: { name: 'BusinessBoosts', email: senderEmail },
       to: [{ email, name: firstName }],
       subject: `Your BusinessBoosts pricing result for ${serviceName}`,
-      htmlContent,
+      htmlContent: brandedHtmlContent,
       tags: ['service-pricing-calculator']
     }, apiKey);
 
