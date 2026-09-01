@@ -21,5 +21,13 @@ module.exports=async function handler(req,res){
   if(directTotal===null||monthlyTotal===null)return json(res,400,{ok:false,error:'Please complete the estimator before emailing your result.'});
   const attributes={FIRSTNAME:firstName,LEAD_SOURCE:'Business Cost Estimator',TOOL_USED:'Business Cost Estimator',SERVICE_NAME:serviceName,CURRENCY:currency,CALCULATOR_DATE:new Date().toISOString().slice(0,10),DIRECT_COST_TOTAL:directTotal,MONTHLY_EXPENSE_TOTAL:monthlyTotal};if(company)attributes.COMPANY=company;if(businessType)attributes.BUSINESS_TYPE=businessType;
   const direct=Array.isArray(body.direct)?body.direct.slice(0,30):[];const overhead=Array.isArray(body.overhead)?body.overhead.slice(0,30):[];
-  try{await brevo('/contacts',{email,attributes,...(marketingConsent?{listIds:[listId]}:{}),updateEnabled:true},apiKey);const htmlContent=emailHtml({firstName,serviceName,currency,directTotal,monthlyTotal,directHtml:costRows(direct,currency),monthlyHtml:costRows(overhead,currency,true)});await brevo('/smtp/email',{sender:{name:'BusinessBoosts',email:senderEmail},replyTo:{name:'BusinessBoosts',email:senderEmail},to:[{email,name:firstName}],subject:`Your BusinessBoosts cost summary for ${serviceName}`,htmlContent,tags:['business-cost-estimator']},apiKey);return json(res,200,{ok:true})}catch(error){console.error('Brevo cost estimator integration error',{status:error.status,message:error.message,details:error.details});return json(res,502,{ok:false,error:'We could not email your summary right now. Please try again shortly.'})}
+  try{
+    await brevo('/contacts',{email,attributes,...(marketingConsent?{listIds:[listId]}:{}),updateEnabled:true},apiKey);
+    console.info('Brevo cost estimator contact saved',{tool:'business-cost-estimator'});
+    const htmlContent=emailHtml({firstName,serviceName,currency,directTotal,monthlyTotal,directHtml:costRows(direct,currency),monthlyHtml:costRows(overhead,currency,true)});
+    const emailResult=await brevo('/smtp/email',{sender:{name:'BusinessBoosts',email:senderEmail},replyTo:{name:'BusinessBoosts',email:senderEmail},to:[{email,name:firstName}],subject:`Your BusinessBoosts cost summary for ${serviceName}`,htmlContent,tags:['business-cost-estimator']},apiKey);
+    if(!emailResult.messageId)throw new Error('Brevo accepted the request without returning an email message ID.');
+    console.info('Brevo cost estimator email accepted',{tool:'business-cost-estimator',messageId:emailResult.messageId});
+    return json(res,200,{ok:true});
+  }catch(error){console.error('Brevo cost estimator integration error',{status:error.status,message:error.message,details:error.details});return json(res,502,{ok:false,error:'We could not email your summary right now. Please try again shortly.'})}
 };
