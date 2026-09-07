@@ -22,8 +22,8 @@
   `;
   document.head.appendChild(style);
 
-  const inputs=document.querySelector('.inputs');
-  if(!inputs) return;
+  const results=document.querySelector('.results');
+  if(!results) return;
 
   const card=document.createElement('section');
   card.className='interpretation-card';
@@ -38,7 +38,8 @@
       <span>Once your costs, time, capacity and current price are entered, we will translate the result into plain English.</span>
     </div>
     <div class="interpretation-next"><strong>Try this next</strong><span>Adjust your price, profit goal or paid client time above and see how your result changes.</span></div>`;
-  inputs.appendChild(card);
+  const leadCapture=results.querySelector('.lead-capture-card');
+  results.insertBefore(card,leadCapture||null);
 
   try{
     if(Array.isArray(guideSteps) && !guideSteps.some(step=>step.title==='What your result means')){
