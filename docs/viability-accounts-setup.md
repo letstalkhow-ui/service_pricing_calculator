@@ -26,6 +26,16 @@ The integration now explicitly requests application/json, sends Content-Type onl
 
 No successful checkout, webhook delivery, payment settlement or payment-triggered report unlock has been claimed. The next verification must use genuine sandbox provider responses and confirm payment intent references for refunds.
 
+## Dedicated sandbox callback
+
+A sandbox-only Supabase Edge Function, `viability-payment-webhook`, is deployed in project `bfftokfwhhzeoxqtkycv`. Its callback URL is `https://bfftokfwhhzeoxqtkycv.supabase.co/functions/v1/viability-payment-webhook`. This avoids the Vercel preview login gate without changing application protection. An unauthenticated POST reached the handler and returned its own HTTP 401 `Invalid payment signature.` response, with an Edge execution ID. The Vercel authentication barrier is therefore resolved for this dedicated receiver; merchant delivery remains untested.
+
+The function uses the same shared payment verifier as the Vercel handler. It re-fetches settled sessions, matches order/session/amount/currency/mode, requires canonical payment intent references, and delegates idempotency and immutable report creation to the existing database RPC. The sandbox receiver rejects live keys/events and checks test-order ownership before refund/dispute revocation. All 116 local tests passed, including unsigned/wrong-signature, oversized-body, live-mode rejection, verified purchase, and live-order refund isolation cases.
+
+Activation requires Supabase Edge Function secrets `BB_HANDYPAY_TEST_KEY` (a dedicated hp_test_ key), `BB_HANDYPAY_WEBHOOK_SECRET` (the secret returned when this callback is registered with HandyPay), and `BB_SANDBOX_WEBHOOK_ENABLED=true`. Supabase supplies SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to the function. These new secrets are not configured yet; signed-looking requests fail closed with HTTP 503. Checkout stays disabled.
+
+The existing Vercel test key is stored as a non-readable Sensitive variable. It cannot be copied back out for the new runtime. Provision a dedicated test key for this receiver through HandyPay's normal credential workflow, store it only in Supabase secrets, and register the exact callback URL with checkout completion/async-success and refund/dispute-created events. Store the registration secret before activating. No production key or paid plan is needed for this setup.
+
 ## Payment activation remains pending
 
 Approved launch price: US$19 per full saved report, one-time purchase. BusinessBoosts absorbs processing and applicable conversion/banking charges. Preview configuration stores 1900 minor units and usd; checkout remains disabled pending sandbox verification. Check the first live payout for actual net MUR received and review pricing after 20–30 purchases. No automatic price change is authorized. Do not enable live payments before launch verification.
