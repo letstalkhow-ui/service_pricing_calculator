@@ -21,6 +21,25 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.topbar{height:7
 footer{background:#111;color:#aaa;padding:30px 5vw;font-size:12px;line-height:1.5}.footer-wrap{max-width:1120px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:24px}.footer-wrap strong{color:#fff}
 @media(max-width:900px){.simulator{grid-template-columns:1fr}.side{position:static;grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.choice-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.topbar{height:66px;padding:0 18px}.brand-logo{height:44px}.badge{display:none}.hero{padding:34px 20px 22px}.hero h1{font-size:43px}.hero p{font-size:16px}.shell{padding:0 16px 50px}.step{padding:22px 18px}.step h2{font-size:29px}.progress{padding:14px}.side{grid-template-columns:1fr}.example-banner{margin:0 16px 14px;flex-direction:column;align-items:flex-start!important}.result-grid{grid-template-columns:1fr}.footer-wrap{grid-template-columns:1fr}}
+
+/* Keep select arrows inset and reserve space for long answers. */
+.field select{
+  appearance:none;-webkit-appearance:none;
+  padding-right:44px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23171717' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;background-size:16px;
+}
+.grid2,.grid3{min-width:0}
+.field{min-width:0}
+.nav,.nav .right{flex-wrap:wrap;gap:16px}
+.nav .btn{max-width:100%;white-space:normal}
+.preview{margin-top:24px}
+@media(max-width:600px){
+  .nav{align-items:stretch}
+  .nav .right{flex:1 1 100%}
+  .nav .right .btn{width:100%}
+}
+
 </style>
 <script>
 window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)}
