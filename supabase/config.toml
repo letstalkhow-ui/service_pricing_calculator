@@ -1,3 +1,7 @@
 [functions.viability-payment-webhook]
 # HandyPay authenticates each delivery with a raw-body HMAC signature.
 verify_jwt = false
+
+[functions.viability-webhook-setup]
+# Decommissioned one-time registration helper; platform JWT protection remains enabled.
+verify_jwt = true

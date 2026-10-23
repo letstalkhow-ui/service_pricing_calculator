@@ -15,7 +15,7 @@ Preview-branch configuration now includes the API URL, legacy anon key, random r
 
 ## Sandbox connection status
 
-The dedicated HandyPay test key was saved as `HANDYPAY_API_KEY`, a Vercel Secret scoped only to `feature/viability-simulator-v1`. No live key was used. Checkout remains disabled and no merchant webhook has been registered.
+The dedicated HandyPay test key was saved as `HANDYPAY_API_KEY`, a Vercel Secret scoped only to `feature/viability-simulator-v1`. No live key was used. Checkout remains disabled. A dedicated Supabase sandbox webhook has now been registered as described below.
 
 Initial sandbox checks and subsequent resolution:
 
@@ -32,9 +32,15 @@ A sandbox-only Supabase Edge Function, `viability-payment-webhook`, is deployed 
 
 The function uses the same shared payment verifier as the Vercel handler. It re-fetches settled sessions, matches order/session/amount/currency/mode, requires canonical payment intent references, and delegates idempotency and immutable report creation to the existing database RPC. The sandbox receiver rejects live keys/events and checks test-order ownership before refund/dispute revocation. All 116 local tests passed, including unsigned/wrong-signature, oversized-body, live-mode rejection, verified purchase, and live-order refund isolation cases.
 
-Activation requires Supabase Edge Function secrets `BB_HANDYPAY_TEST_KEY` (a dedicated hp_test_ key), `BB_HANDYPAY_WEBHOOK_SECRET` (the secret returned when this callback is registered with HandyPay), and `BB_SANDBOX_WEBHOOK_ENABLED=true`. Supabase supplies SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to the function. These new secrets are not configured yet; signed-looking requests fail closed with HTTP 503. Checkout stays disabled.
+Activation requires Supabase Edge Function secrets `BB_HANDYPAY_TEST_KEY` (a dedicated hp_test_ key), `BB_HANDYPAY_WEBHOOK_SECRET` (the secret returned when this callback is registered with HandyPay), and `BB_SANDBOX_WEBHOOK_ENABLED=true`. Supabase supplies SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to the function. All three secrets are now configured. Checkout stays disabled pending genuine merchant payment verification.
 
-The existing Vercel test key is stored as a non-readable Sensitive variable. It cannot be copied back out for the new runtime. Provision a dedicated test key for this receiver through HandyPay's normal credential workflow, store it only in Supabase secrets, and register the exact callback URL with checkout completion/async-success and refund/dispute-created events. Store the registration secret before activating. No production key or paid plan is needed for this setup.
+The existing Vercel test key remains a non-readable Sensitive variable. A dedicated HandyPay test key named BusinessBoosts Supabase Sandbox Callback was created by the user and stored only in Supabase secrets. HandyPay registered callback ID `f85e2827-cee3-46ca-ae4f-58a5be92d2f3` for checkout completion, asynchronous success, refund and dispute-created events. Its one-time signing secret was saved in Supabase without printing it or committing it to source.
+
+On 23 October 2026, a harmless locally signed `bb.signature_probe` event reached the deployed callback and returned HTTP 200 with `received:true, ignored:true`. Changing the body while retaining that signature returned HTTP 401 `Invalid payment signature.` An unsigned POST also returned HTTP 401. These prove signature configuration and rejection behavior, not a genuine HandyPay delivery, settled payment or report unlock.
+
+The temporary registration helper `viability-webhook-setup` retained platform JWT verification throughout. The eventual administrator check also proved service-only database RPC access before registration. After registration, its setup flag was set false and the deployed function was replaced with an unconditional disabled response while retaining verify_jwt=true. Automatic review rejected a proposed verify_jwt=false change to this helper; that proposal was not used. No platform authentication bypass or Vercel protection change was required. Temporary credential variables and the key display were cleared/closed.
+
+No production key, real payment or paid plan was used. Next verify genuine checkout completion and its merchant payload, then duplicate/refund behavior and report access.
 
 ## Payment activation remains pending
 
