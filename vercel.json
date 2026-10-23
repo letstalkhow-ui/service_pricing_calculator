@@ -2,10 +2,25 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "routes": [
-    { "src": "^/$", "dest": "/api/homepage-page" },
-    { "src": "^/tools/pricing$", "dest": "/api/preview-page" },
-    { "src": "^/tools/cost-estimator$", "dest": "/api/cost-estimator-page" },
-    { "handle": "filesystem" }
+    {
+      "src": "^/$",
+      "dest": "/api/homepage-page"
+    },
+    {
+      "src": "^/tools/pricing$",
+      "dest": "/api/preview-page"
+    },
+    {
+      "src": "^/tools/cost-estimator$",
+      "dest": "/api/cost-estimator-page"
+    },
+    {
+      "src": "^/viability$",
+      "dest": "/api/viability-page"
+    },
+    {
+      "handle": "filesystem"
+    }
   ],
   "functions": {
     "api/homepage-page.js": {
@@ -16,6 +31,9 @@
     },
     "api/cost-estimator-page.js": {
       "includeFiles": "tools/cost-estimator.html"
+    },
+    "api/viability-page.js": {
+      "includeFiles": "viability.html"
     }
   }
 }
