@@ -2,7 +2,7 @@
 
 Run `node --test tests/*.test.cjs`. No npm dependencies or build step.
 
-`viability-cash-engine.js` shares the financial engine used by the form. `run(input, scenario)` returns a 12-month cash path; `simulate(input)` applies all four versioned scenario configurations. Expected preserves user values. Adjustments are planning assumptions pending calibration, not statistical forecasts. No market demand or overall viability score is inferred.
+`viability-cash-engine.js` shares the financial engine used by the form. `run(input, scenario, horizon)` supports 12 months (default) and 36 months; `simulate(input, horizon)` applies all four versioned scenario configurations. Expected preserves user values. Adjustments are planning assumptions pending calibration, not statistical forecasts. No market demand or overall viability score is inferred.
 
 ## Cash basis
 
@@ -20,7 +20,7 @@ Additional income uses net contribution. Recurring streams repeat monthly. Seaso
 
 Funding gap is the absolute minimum negative month-end cash balance. Adding that amount at Month 1 removes modelled negative month-end balances. Buffer funding gap additionally meets the selected monthly reserve, including operating costs, debt and drawings. It is separate from the bare funding gap.
 
-Simple payback divides setup/equipment investment by target-level operating profit, returning null for loss. Cash recovery uses cumulative actual operating cash after debt and drawings; no recovery beyond the 12-month horizon is claimed. It includes collections of pre-forecast receivables only when explicitly supplied.
+Simple payback divides setup/equipment investment by target-level operating profit, returning null for loss. Cash recovery uses cumulative actual operating cash after debt and drawings; recovery is measured within the selected 12- or 36-month horizon. Months 13–36 hold post-ramp price, costs, sales and market caps constant; recurring/seasonal patterns repeat annually, one-off receipts and setup spending do not, and debt follows the entered remaining term. First-year results remain exactly the same under either horizon. It includes collections of pre-forecast receivables only when explicitly supplied.
 
 Core and growth target-profit resilience are calculated independently from cash resilience. The latter counts scenarios without negative cash; none of these replaces market viability or Model Confidence.
 

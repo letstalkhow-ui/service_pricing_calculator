@@ -1,0 +1,2 @@
+const fs=require('fs');const path=require('path');
+module.exports=function handler(req,res){try{const html=fs.readFileSync(path.join(process.cwd(),'viability-report.html'),'utf8');res.setHeader('Content-Type','text/html; charset=utf-8');res.setHeader('Cache-Control','no-store');res.setHeader('X-Robots-Tag','noindex, nofollow');res.status(200).send(html);}catch(error){console.error('Report preview unavailable');res.status(500).send('Report preview unavailable.');}};

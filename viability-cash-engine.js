@@ -4,7 +4,7 @@
   else root.BusinessBoostsCash=factory(root.BusinessBoostsFinancial);
 })(typeof globalThis!=='undefined'?globalThis:this,function(financial){
 'use strict';
-const VERSION='cash-scenarios-v1.0.0';
+const VERSION='cash-scenarios-v1.1.0';
 const SCENARIOS=Object.freeze({
   conservative:Object.freeze({label:'Conservative',demand:0.8,price:0.97,directCost:1.05,fixedCost:1.03,additionalRevenue:0.8,rampExtra:3,delayExtra:0.25}),
   expected:Object.freeze({label:'Expected',demand:1,price:1,directCost:1,fixedCost:1,additionalRevenue:1,rampExtra:0,delayExtra:0}),
@@ -14,13 +14,16 @@ const SCENARIOS=Object.freeze({
 function nonnegative(v,name,fallback=0){if(v===undefined||v===null||v==='')return fallback;const n=Number(v);if(!Number.isFinite(n)||n<0)throw new Error(name+' must be a finite, non-negative number.');return n;}
 function integer(v,name,min,max,fallback){const n=nonnegative(v,name,fallback);if(!Number.isInteger(n)||n<min||n>max)throw new Error(name+' is outside the supported range.');return n;}
 function schedule(value,name){if(value===undefined)return null;if(!Array.isArray(value)||value.length!==12)throw new Error(name+' must contain 12 monthly amounts.');return value.map(v=>nonnegative(v,name));}
-function run(input,scenarioKey='expected'){
+function run(input,scenarioKey='expected',horizon=12){
+  if(horizon!==12&&horizon!==36)throw new Error('Choose a 12- or 36-month projection.');
   const config=SCENARIOS[scenarioKey];if(!config)throw new Error('Unknown scenario.');
   const base=financial.normalize(input);
   const cash=input.cash||{};
   const openingCash=nonnegative(cash.openingCash,'Opening cash');
   const investment=nonnegative(cash.investment,'Investment');
   const setup=nonnegative(cash.setupCosts,'Setup costs');
+  const ownerCash=nonnegative(cash.ownerCash,'Owner cash invested');
+  const externalFunding=nonnegative(cash.externalFunding,'External funding');
   const spendMonths=integer(cash.spendMonths,'Spending months',1,12,1);
   const ramp=integer(cash.rampMonths,'Ramp months',0,12,0);
   const rampMonths=ramp===0?0:Math.min(12,ramp+config.rampExtra);
@@ -53,33 +56,34 @@ function run(input,scenarioKey='expected'){
   if(lateShare>0)assumptions.push(lateShare+'% of collectable sales are paid one month later than the normal payment terms.');
   if(cash.investmentAlreadyPaid)assumptions.push('Setup and equipment spending has already been paid before Month 1; it is not deducted again.');
   if(rampMonths)assumptions.push('Sales move in equal monthly steps from starting sales, reaching the target in Month '+rampMonths+'.');
-  const collectionQueue=Array(26).fill(0);
-  const rows=[];let balance=openingCash,lowest=openingCash,lowMonth=0,firstShortfall=null,cumulativeRecovery=0,recoveryMonth=null;
+  if(horizon===36)assumptions.push('Months 13–36 hold target sales, prices and costs constant after the ramp. Seasonal patterns repeat annually, one-off income and setup spending do not repeat, and loan repayments follow the remaining term. No inflation or automatic future growth is assumed.');
+  const collectionQueue=Array(horizon+15).fill(0);
+  const rows=[];let balance=openingCash,lowest=openingCash,lowMonth=0,firstShortfall=null,cumulativeRecovery=0,recoveryMonth=null,cumulativeProfit=0,operatingRecoveryMonth=null,ownerRecoveryMonth=null;
   let receivableBalance=0;
-  const adjusted={...input,volumePeriod:'month',expectedVolume:targetVolume,maxCapacity:base.maxCapacity,
+  const adjusted={...input,loanRepayment:loanMonths===0?0:base.loanRepayment,volumePeriod:'month',expectedVolume:targetVolume,maxCapacity:base.maxCapacity,
     sellingPrice:base.sellingPrice*config.price,realisedPrice:base.realisedPrice===null?null:base.realisedPrice*config.price,
     directCost:base.directCost*config.directCost,staffCost:base.staffCost*config.directCost,ownerLabour:base.ownerLabour*config.directCost,
     fixedCosts:base.fixedCosts*config.fixedCost,growthCosts:base.growthCosts*config.fixedCost,
     capacitySteps:base.capacitySteps.map(s=>({...s,monthlyCost:s.monthlyCost*config.fixedCost})),
     additionalStreams:[]};
   const steady=financial.calculate({...adjusted,additionalStreams:streams.map(s=>({...s,amount:s.monthlyRevenue*config.additionalRevenue,directCost:(s.monthlyRevenue-s.monthlyContribution)*config.directCost,period:'month'}))});
-  for(let i=0;i<12;i++){
+  for(let i=0;i<horizon;i++){
     const rampFactor=rampMonths?Math.min(1,(i+1)/rampMonths):1;
-    const volume=Math.min(base.maxCapacity,(startingVolume+(targetVolume-startingVolume)*rampFactor)*seasonality[i]);
+    const volume=Math.min(base.maxCapacity,(startingVolume+(targetVolume-startingVolume)*rampFactor)*seasonality[i%12]);
     const operating=financial.calculate({...adjusted,expectedVolume:volume});
     const unit=operating.unit_economics;
     let extraRevenue=0,extraCost=0;
     for(const s of streams){
       const active=s.kind!=='one-off'||i===s.receiptMonth-1;
-      extraRevenue+=(s.revenueSchedule?s.revenueSchedule[i]:(active?(s.kind==='one-off'?nonnegative(s.amount,'One-off amount'):s.monthlyRevenue):0))*config.additionalRevenue;
-      extraCost+=(s.costSchedule?s.costSchedule[i]:(active?(s.kind==='one-off'?nonnegative(s.directCost,'One-off cost'):s.monthlyRevenue-s.monthlyContribution):0))*config.directCost;
+      extraRevenue+=(s.revenueSchedule?(s.kind==='one-off'?(i<12?s.revenueSchedule[i]:0):s.revenueSchedule[i%12]):(active?(s.kind==='one-off'?nonnegative(s.amount,'One-off amount'):s.monthlyRevenue):0))*config.additionalRevenue;
+      extraCost+=(s.costSchedule?(s.kind==='one-off'?(i<12?s.costSchedule[i]:0):s.costSchedule[i%12]):(active?(s.kind==='one-off'?nonnegative(s.directCost,'One-off cost'):s.monthlyRevenue-s.monthlyContribution):0))*config.directCost;
     }
     const revenue=volume*unit.effective_price+extraRevenue;
     const collectible=revenue*(1-uncollected/100);
     function enqueue(amount,lag){const whole=Math.floor(lag),fraction=lag-whole;collectionQueue[i+whole]+=amount*(1-fraction);collectionQueue[i+whole+1]+=amount*fraction;}
     enqueue(collectible*(1-lateShare/100),collectionDelay);
     enqueue(collectible*lateShare/100,Math.min(13,collectionDelay+1));
-    const collected=collectionQueue[i]+receivables[i];
+    const collected=collectionQueue[i]+(receivables[i]||0);
     receivableBalance+=collectible-collectionQueue[i];
     // Owner labour is an economic cost, not a cash payout. Actual withdrawals are separate.
     const directCash=volume*(unit.direct_cost-base.ownerLabour*config.directCost)+extraCost;
@@ -96,26 +100,33 @@ function run(input,scenarioKey='expected'){
     const buffer=bufferMonths*(directCash+stepCost+fixed+growth+debt+ownerDrawings);
     // Recovery requires real cash after debt/drawings, measured against the full investment.
     cumulativeRecovery+=operatingCash-debt-ownerDrawings;
+    cumulativeProfit+=profit;
+    if(investment+setup>0&&operatingRecoveryMonth===null&&cumulativeProfit>=investment+setup)operatingRecoveryMonth=i+1;
+    if(ownerCash>0&&ownerRecoveryMonth===null&&cumulativeRecovery>=ownerCash)ownerRecoveryMonth=i+1;
     if(investment+setup>0&&recoveryMonth===null&&cumulativeRecovery>=investment+setup)recoveryMonth=i+1;
-    rows.push({month:i+1,volume,opening_cash:opening,revenue,cash_collected:collected,direct_cost_cash:directCash,capacity_step_cost:stepCost,fixed_cost:fixed,growth_cost:growth,core_operating_profit:profit+growth,operating_profit:profit,loan_repayment:debt,owner_drawings:ownerDrawings,investment_spending:spend,operating_cash:operatingCash,net_cash:netCash,closing_cash:balance,safety_buffer:buffer});
+    rows.push({month:i+1,volume,opening_cash:opening,revenue,cash_collected:collected,direct_cost_cash:directCash,capacity_step_cost:stepCost,fixed_cost:fixed,growth_cost:growth,core_operating_profit:profit+growth,operating_profit:profit,loan_repayment:debt,owner_drawings:ownerDrawings,investment_spending:spend,operating_cash:operatingCash,net_cash:netCash,closing_cash:balance,safety_buffer:buffer,cumulative_operating_profit:cumulativeProfit,cumulative_free_cash:cumulativeRecovery});
   }
   const fundingGap=Math.max(0,-lowest);
   const bufferGap=Math.max(0,...rows.map(r=>r.safety_buffer-r.closing_cash));
-  const annualProfit=rows.reduce((a,r)=>a+r.operating_profit,0);
-  const annualOperatingCash=rows.reduce((a,r)=>a+r.operating_cash,0);
+  const firstYear=rows.slice(0,12);
+  const annualProfit=firstYear.reduce((a,r)=>a+r.operating_profit,0);
+  const annualOperatingCash=firstYear.reduce((a,r)=>a+r.operating_cash,0);
   const flags=[...steady.hard_stop_flags];if(fundingGap>0)flags.push('CASH_FUNDING_GAP');
   const stableMonth=rows.findIndex((r,i)=>rows.slice(i).every(x=>x.operating_profit>=0));
   if(firstShortfall!==null&&(stableMonth<0||firstShortfall<=stableMonth+1))flags.push('CASH_EXHAUSTED_BEFORE_STABLE_BREAK_EVEN');
   const cashStatus=fundingGap>0?'Funding gap':bufferGap>0?'Tight':'Adequate';
-  return {model_version:VERSION,scenario:scenarioKey,scenario_assumptions:config,assumptions,financial_results:steady,
-    cash_results:{months:rows,opening_cash:openingCash,closing_cash:balance,lowest_cash:lowest,lowest_cash_month:lowMonth,funding_gap:fundingGap,buffer_funding_gap:bufferGap,first_shortfall_month:firstShortfall,cash_status:cashStatus,annual_operating_profit:annualProfit,annual_operating_cash:annualOperatingCash,uncollected_revenue:rows.reduce((a,r)=>a+r.revenue,0)*uncollected/100,receivables_after_month_12:receivableBalance,stable_operating_break_even_month:stableMonth<0?null:stableMonth+1},
-    investment_results:{investment_and_setup:investment+setup,minimum_opening_cash:openingCash+fundingGap,simple_payback_months:steady.financial_results.operating_profit>0?(investment+setup)/steady.financial_results.operating_profit:null,cash_recovery_month:recoveryMonth,cash_recovered_in_year:Math.max(0,cumulativeRecovery),recovery_status:investment+setup===0?'No investment entered':recoveryMonth===null?'Not recovered within 12 months':'Recovered within 12 months'},
+  const operatingReserve=cash.investmentAlreadyPaid?openingCash:Math.max(0,openingCash-investment-setup);
+  const capitalPlanned=investment+setup+operatingReserve;
+  const yearly=[0,1,2].slice(0,horizon/12).map(y=>{const months=rows.slice(y*12,y*12+12);return {year:y+1,revenue:months.reduce((a,m)=>a+m.revenue,0),operating_profit:months.reduce((a,m)=>a+m.operating_profit,0),operating_cash:months.reduce((a,m)=>a+m.operating_cash,0),debt_repayments:months.reduce((a,m)=>a+m.loan_repayment,0),owner_drawings:months.reduce((a,m)=>a+m.owner_drawings,0),investment_spending:months.reduce((a,m)=>a+m.investment_spending,0),closing_cash:months.at(-1).closing_cash};});
+  return {model_version:VERSION,horizon_months:horizon,yearly_results:yearly,scenario:scenarioKey,scenario_assumptions:config,assumptions,financial_results:steady,
+    cash_results:{months:rows,opening_cash:openingCash,closing_cash:balance,lowest_cash:lowest,lowest_cash_month:lowMonth,funding_gap:fundingGap,buffer_funding_gap:bufferGap,first_shortfall_month:firstShortfall,cash_status:cashStatus,annual_operating_profit:annualProfit,annual_operating_cash:annualOperatingCash,projection_operating_profit:cumulativeProfit,projection_operating_cash:rows.reduce((a,r)=>a+r.operating_cash,0),uncollected_revenue:rows.reduce((a,r)=>a+r.revenue,0)*uncollected/100,receivables_after_month_12:firstYear.reduce((a,m)=>a+m.revenue*(1-uncollected/100)-m.cash_collected,0)+receivables.reduce((a,b)=>a+b,0),receivables_at_end:receivableBalance,stable_operating_break_even_month:stableMonth<0?null:stableMonth+1},
+    investment_results:{investment_and_setup:investment+setup,minimum_opening_cash:openingCash+fundingGap,total_capital_planned:capitalPlanned,opening_operating_reserve_allocation:operatingReserve,owner_cash_invested:ownerCash,external_funding:externalFunding,owner_cash_at_risk:Math.max(0,capitalPlanned-externalFunding),operating_payback_month:operatingRecoveryMonth,owner_cash_payback_month:ownerRecoveryMonth,owner_recovery_retained_at_end:ownerCash>0&&cumulativeRecovery>=ownerCash,cash_recovery_retained_at_end:investment+setup>0&&cumulativeRecovery>=investment+setup,investment_recovery_ratio:investment+setup>0?cumulativeProfit/(investment+setup):null,first_year_return_on_planned_capital:capitalPlanned>0?annualProfit/capitalPlanned:null,simple_payback_months:steady.financial_results.operating_profit>0?(investment+setup)/steady.financial_results.operating_profit:null,cash_recovery_month:recoveryMonth,cash_recovered_in_year:Math.max(0,cumulativeRecovery),recovery_status:investment+setup===0?'No investment entered':recoveryMonth===null?'Not recovered within '+horizon+' months':'Recovered within '+horizon+' months'},
     hard_stop_flags:[...new Set(flags)]};
 }
-function simulate(input){
-  const scenarios={};for(const key of Object.keys(SCENARIOS))scenarios[key]=run(input,key);
+function simulate(input,horizon=12){
+  const scenarios={};for(const key of Object.keys(SCENARIOS))scenarios[key]=run(input,key,horizon);
   function resilience(profitKey){const passes=Object.fromEntries(Object.entries(scenarios).map(([k,s])=>[k,profitKey(s)>=0]));return {passes,label:passes.stress&&passes.conservative&&passes.expected&&passes.strong?'Very strong':passes.conservative&&passes.expected&&passes.strong?'Strong':passes.expected&&passes.strong?'Moderate':passes.strong?'Very fragile':'Requires adjustment'};}
-  return {model_version:VERSION,scenario_results:scenarios,core_resilience:resilience(s=>s.financial_results.financial_results.core_operating_profit),growth_resilience:resilience(s=>s.financial_results.financial_results.operating_profit),cash_resilience:{scenarios_without_funding_gap:Object.values(scenarios).filter(s=>s.cash_results.funding_gap===0).length,total_scenarios:4}};
+  return {model_version:VERSION,horizon_months:horizon,scenario_results:scenarios,core_resilience:resilience(s=>s.financial_results.financial_results.core_operating_profit),growth_resilience:resilience(s=>s.financial_results.financial_results.operating_profit),cash_resilience:{scenarios_without_funding_gap:Object.values(scenarios).filter(s=>s.cash_results.funding_gap===0).length,total_scenarios:4}};
 }
 return {VERSION,SCENARIOS,run,simulate};
 });

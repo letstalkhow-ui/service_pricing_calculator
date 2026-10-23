@@ -19,6 +19,10 @@
       "dest": "/api/viability-page"
     },
     {
+      "src": "^/viability/report-preview$",
+      "dest": "/api/viability-report-page"
+    },
+    {
       "handle": "filesystem"
     }
   ],
@@ -34,6 +38,9 @@
     },
     "api/viability-page.js": {
       "includeFiles": "viability.html"
+    },
+    "api/viability-report-page.js": {
+      "includeFiles": "viability-report.html"
     }
   }
 }

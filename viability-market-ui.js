@@ -61,7 +61,7 @@ function renderMarketResults(){
       ['What this means',growth.hard_stop_flags.filter(f=>f.ceiling!==null).map(f=>f.reason).join(' ')||'The model passes the current financial and market checks under the stated assumptions. This is not proof of future demand.'],
       ['Why it matters','A profitable sales target only helps if enough paying customers can be reached and cash lasts long enough to deliver the plan.'],
       ['What to do next',a.recommended_actions.map(r=>r.action+': '+r.reason).join(' ')],
-      ['Planning limits','Score mappings and competition multipliers are provisional calibration choices. Model Confidence describes evidence quality and does not change the viability score. The 36-month investment projection and final launch validation are still pending.']
+      ['Planning limits','Score mappings and competition multipliers are provisional calibration choices. Model Confidence describes evidence quality and does not change the viability score. The 36-month investment projection holds post-ramp assumptions constant; final calibration and launch validation are still pending.']
     ].map(([h,t])=>'<p><strong>'+escapeHtml(h)+'</strong><br>'+escapeHtml(t)+'</p>').join('');
     const names={market:'Market Opportunity',unit:'Unit Economics',breakEven:'Break-Even Feasibility',capacity:'Capacity Feasibility',resilience:'Scenario Resilience'};
     el('marketDimensions').innerHTML=cashTable('Five viability dimensions: growth plan',['Dimension','Weight','Score','What it tests'],growth.dimensions.map(d=>[names[d.key],d.weight+'%',d.score+'/100',d.reason]));

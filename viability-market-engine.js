@@ -1,6 +1,6 @@
 (function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./viability-engine'),require('./viability-cash-engine'));else root.BusinessBoostsMarket=factory(root.BusinessBoostsFinancial,root.BusinessBoostsCash);})(typeof globalThis!=='undefined'?globalThis:this,function(financial,cashEngine){
 'use strict';
-const VERSION='market-scoring-v1.0.0';
+const VERSION='market-scoring-v1.1.0';
 // All numerical choices beyond the locked framework are disclosed, provisional planning rules.
 const CONFIG=Object.freeze({weights:Object.freeze({market:25,unit:25,breakEven:20,capacity:15,resilience:15}),shareRange:Object.freeze({conservative:0.65,expected:1,strong:1.35,stress:0.4}),affordability:Object.freeze([[0.001,0.95],[0.005,0.85],[0.01,0.70],[0.025,0.50],[0.05,0.30],[null,0.15]].map(Object.freeze)),staleYears:3});
 const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
@@ -79,7 +79,7 @@ function confidence(input,result){
   if(input.additionalStreams?.some(s=>s.kind==='seasonal'&&!s.revenueSchedule)){penalty++;reasons.push('Seasonal revenue is averaged because monthly timing is unknown.');}
   return {level:penalty>=6?'Low':penalty>=2?'Moderate':'High',reasons:reasons.length?reasons:['Critical inputs are supported by checked records and comparable recent public data.'],separate_from_viability:true};
 }
-function scoreAssessment(input,result,simulation,kind){
+function scoreAssessment(input,result,simulation,kind,projection){
   const scenario=simulation.scenario_results.expected,fin=scenario.financial_results,core=kind==='core';
   const be=core?fin.break_even_results.core_volume:fin.break_even_results.growth_volume;
   const profit=core?fin.financial_results.core_operating_profit:fin.financial_results.operating_profit;
@@ -103,7 +103,13 @@ function scoreAssessment(input,result,simulation,kind){
   if(scenario.cash_results.funding_gap>0)limit('CASH_FUNDING_GAP',79,'The 12-month plan needs more cash; a Strong classification is withheld.');
   if(scenario.hard_stop_flags.includes('CASH_EXHAUSTED_BEFORE_STABLE_BREAK_EVEN'))limit('CASH_BEFORE_BREAK_EVEN',79,'Cash falls below zero before stable operating break-even.');
   if(profit<fin.normalized_inputs.loanRepayment)limit('DEBT_CASH_PRESSURE',64,'Loan repayments exceed target-level operating profit.');
-  if(!core&&input.cash?.investment>0&&scenario.investment_results.cash_recovery_month===null)flags.push({code:'INVESTMENT_RECOVERY_UNRESOLVED',ceiling:null,reason:'Investment is not recovered within 12 months. The locked 36-month projection is still pending; no long-term recovery conclusion is made.'});
+  if(projection?.scenario_results.expected.cash_results.funding_gap>0)limit('PROJECTED_CASH_FUNDING_GAP',79,'The 36-month continuation has a modelled funding gap.');
+  if(!core&&projection){
+    const recovery=Object.fromEntries(Object.entries(projection.scenario_results).map(([key,s])=>[key,s.investment_results.cash_recovery_month!==null&&s.investment_results.cash_recovery_retained_at_end]));
+    const cost=projection.scenario_results.expected.investment_results.investment_and_setup;
+    if(cost>0&&!recovery.expected)flags.push({code:'INVESTMENT_NOT_RECOVERED',ceiling:null,reason:'Setup and equipment spending is not recovered and retained from free cash within 36 months under Expected assumptions.'});
+    if(cost>0&&recovery.strong&&!recovery.expected&&!recovery.conservative&&!recovery.stress)limit('STRONG_ONLY_RECOVERY',79,'Investment recovery depends entirely on Strong Execution.');
+  }
   const final=Math.floor(Math.min(raw,cap)*10)/10;
   return {scope:kind,raw_score:Math.round(raw*10)/10,score:Math.round(final*10)/10,classification:label(final),dimensions,hard_stop_flags:flags,market_coverage:marketCoverage,break_even_coverage:coverage,required_market_share:requiredShare,break_even_customers:requiredCustomers,modelled_monthly_sales:fin.normalized_inputs.expectedVolume,expected_operating_profit:profit,provisional:true};
 }
@@ -116,7 +122,9 @@ function assess(input){
   const full=cashEngine.simulate(constrained);
   // Core comparison removes discretionary growth/setup spending, retaining current debt and drawings.
   const coreSimulation=cashEngine.simulate({...constrained,growthCosts:0,cash:{...input.cash,investment:0,setupCosts:0}});
-  const core=scoreAssessment(input,result,coreSimulation,'core'),expansion=scoreAssessment(input,result,full,'growth');
+  const projection=cashEngine.simulate(constrained,36);
+  const coreProjection=cashEngine.simulate({...constrained,growthCosts:0,cash:{...input.cash,investment:0,setupCosts:0}},36);
+  const core=scoreAssessment(input,result,coreSimulation,'core',coreProjection),expansion=scoreAssessment(input,result,full,'growth',projection);
   const actions=[];
   const flags=expansion.hard_stop_flags;
   const add=(action,reason)=>{if(!actions.some(a=>a.action===action))actions.push({action,reason});};
@@ -125,13 +133,14 @@ function assess(input){
   if(flags.some(f=>f.code==='MARKET_BELOW_BREAK_EVEN'))add('Validate demand before committing more capital','Modelled obtainable demand is below the number of monthly sales required.');
   const gap=full.scenario_results.expected.cash_results.funding_gap;
   if(gap>0)add('Fund or reduce the cash shortfall','At least '+Math.ceil(gap)+' '+(input.market?.currency||'currency units')+' is needed to avoid negative modelled month-end cash, before a safety reserve.');
+  if(flags.some(f=>f.code==='STRONG_ONLY_RECOVERY'))add('Reduce the investment exposure or validate the upside case','The spending is only recovered and retained under Strong Execution within 36 months.');
   if(core.score>expansion.score&&input.growthCosts>0)add('Rephase the expansion plan','Core operations score better than the plan after growth costs.');
   if(flags.some(f=>f.code==='DEBT_CASH_PRESSURE'))add('Review the repayment structure','Debt repayments exceed target-level operating profit.');
   if(modelConfidence.level!=='High')add('Check the assumptions with records or a small sales test','Confidence in the evidence is '+modelConfidence.level.toLowerCase()+'. This does not change the viability score.');
   if(actions.length<3)add('Test weaker sales and payment timing','Use the Conservative and Stress scenarios to check how much cash is at risk.');
   if(actions.length<3)add('Confirm costs and delivery capacity','A missing operating cost or overstated capacity can reverse the assessment.');
   const interpretations=[{section:'Market opportunity',finding:'Estimated obtainable demand is '+obtainableText(result.demand.expected.monthly_units)+' monthly sales.',meaning:'This is the demand estimate after the target profile, affordability, competition and capacity assumptions.',commercial_consequence:expansion.hard_stop_flags.some(f=>f.code==='MARKET_BELOW_BREAK_EVEN')?'The market estimate does not support the sales required to cover costs.':'The modelled market can support the break-even sales level, subject to the assumptions.',action:'Validate the customer and competitor assumptions before committing capital.'},{section:'Working capital',finding:'The Expected scenario has a modelled funding gap of '+Math.ceil(gap)+' '+(input.market?.currency||'currency units')+'.',meaning:'The funding gap measures additional opening cash required to avoid negative month-end balances.',commercial_consequence:gap>0?'The plan can run short of cash even when target sales appear profitable.':'No negative month-end balance is modelled; payment timing and unexpected costs remain risks.',action:gap>0?'Secure funding, reduce phased spending or improve collection timing, then re-run.':'Check the selected reserve and test weaker collections.'},{section:'Core operation and growth plan',finding:'Core operation: '+core.classification+'. Growth plan: '+expansion.classification+'.',meaning:'The core comparison excludes discretionary recurring growth and new setup investment, while keeping current debt and withdrawals.',commercial_consequence:core.score>expansion.score?'The growth plan increases the pressure on an otherwise stronger core operation.':'Both assessments depend on the same demand and cost evidence.',action:core.score>expansion.score?'Consider phasing the expansion and testing demand before increasing commitments.':'Confirm the assumptions with actual operating records or a small sales test.'}];
-  return {model_version:VERSION,interpretations,market_results:result,model_confidence:modelConfidence,overall_score:expansion.score,overall_classification:expansion.classification,core_business_assessment:core,expansion_plan_assessment:expansion,scenario_results:full,recommended_actions:actions.slice(0,5),configuration:CONFIG,provisional:true};
+  return {model_version:VERSION,interpretations,market_results:result,model_confidence:modelConfidence,overall_score:expansion.score,overall_classification:expansion.classification,core_business_assessment:core,expansion_plan_assessment:expansion,scenario_results:full,investment_projection:projection,recommended_actions:actions.slice(0,5),configuration:CONFIG,provisional:true};
 }
 return {VERSION,CONFIG,market,confidence,assess};
 });
