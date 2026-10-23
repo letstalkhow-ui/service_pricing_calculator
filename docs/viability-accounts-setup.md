@@ -13,6 +13,17 @@ Preview-branch configuration now includes the API URL, legacy anon key, random r
 3. Set the Supabase email template to show `{{ .Token }}` for OTP sign-in. Configure custom SMTP before customer testing. The default Supabase sender is restricted. A real verification email was delivered and its code successfully exchanged for an authenticated session.
 4. The preview was redeployed and email sign-in plus save/resume passed. Remaining checks include session refresh, sign-out revocation behavior and concurrent payment delivery under merchant sandbox traffic. RLS ownership, report immutability and sequential duplicate purchase finalization were verified directly in PostgreSQL. A clearly labelled QA sample: MoveWell Studio draft remains in the test account for review.
 
+## Sandbox connection status
+
+The dedicated HandyPay test key was saved as `HANDYPAY_API_KEY`, a Vercel Secret scoped only to `feature/viability-simulator-v1`. No live key was used. Checkout remains disabled and no merchant webhook has been registered.
+
+Two external blockers were observed during sandbox setup:
+
+- A server GET to the documented HandyPay `/api/v1/webhook-endpoints` API, authenticated with the test key, returned HTTP 403 and `error code: 1010` instead of the documented JSON response. The credential was not validated by a successful API response. Do not treat this as proof of an invalid key. Provider-side API access needs resolution before real checkout testing; no fingerprint or network-path workaround was attempted.
+- An unauthenticated POST to the deployed preview payment webhook returned HTTP 401 with `Protected by Vercel Authentication`. Provider callbacks cannot pass that interactive login. A dedicated externally reachable callback, protected by the existing raw-body HMAC verification, must be configured before registration. Do not disable authentication for the whole application or place bypass credentials in webhook URLs.
+
+No successful checkout, webhook delivery, payment settlement or payment-triggered report unlock has been claimed. The next verification must use genuine sandbox provider responses and confirm payment intent references for refunds.
+
 ## Payment activation remains pending
 
 Approved launch price: US$19 per full saved report, one-time purchase. BusinessBoosts absorbs processing and applicable conversion/banking charges. Preview configuration stores 1900 minor units and usd; checkout remains disabled pending sandbox verification. Check the first live payout for actual net MUR received and review pricing after 20–30 purchases. No automatic price change is authorized. Do not enable live payments before launch verification.
