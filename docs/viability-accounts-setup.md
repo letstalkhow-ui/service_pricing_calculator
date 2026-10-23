@@ -15,7 +15,7 @@ Preview-branch configuration now includes the API URL, legacy anon key, random r
 
 ## Payment activation remains pending
 
-The report price has not been approved. Do not set a guessed price or enable live payments.
+Approved launch price: US$19 per full saved report, one-time purchase. BusinessBoosts absorbs processing and applicable conversion/banking charges. Preview configuration stores 1900 minor units and usd; checkout remains disabled pending sandbox verification. Check the first live payout for actual net MUR received and review pricing after 20–30 purchases. No automatic price change is authorized. Do not enable live payments before launch verification.
 
 For sandbox testing only, configure `HANDYPAY_API_KEY` (`hp_test_...`), `HANDYPAY_WEBHOOK_SECRET`, an approved `VIABILITY_REPORT_AMOUNT_MINOR`, `VIABILITY_REPORT_CURRENCY`, and `VIABILITY_CHECKOUT_ENABLED=true`. Confirm that the approved currency and its minor-unit convention are supported by the merchant account.
 
