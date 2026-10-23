@@ -25,7 +25,8 @@ function run(input,scenarioKey='expected'){
   const ramp=integer(cash.rampMonths,'Ramp months',0,12,0);
   const rampMonths=ramp===0?0:Math.min(12,ramp+config.rampExtra);
   const startVolume=financial.normalize({...input,expectedVolume:nonnegative(cash.startingVolume,'Starting volume')}).expectedVolume;
-  const targetVolume=Math.min(base.maxCapacity,base.expectedVolume*config.demand);
+  const marketCap=input.marketVolumeCaps?.[scenarioKey];
+  const targetVolume=Math.min(base.maxCapacity,base.expectedVolume*config.demand,marketCap===undefined?Infinity:nonnegative(marketCap,'Market demand cap'));
   if(startVolume>base.maxCapacity)throw new Error('Starting sales exceed capacity.');
   const startingVolume=startVolume;
   const delay=nonnegative(cash.collectionDelayMonths,'Payment delay');if(delay>12)throw new Error('Payment delay must be at most 12 months.');
