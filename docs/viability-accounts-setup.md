@@ -17,10 +17,12 @@ Preview-branch configuration now includes the API URL, legacy anon key, random r
 
 The dedicated HandyPay test key was saved as `HANDYPAY_API_KEY`, a Vercel Secret scoped only to `feature/viability-simulator-v1`. No live key was used. Checkout remains disabled and no merchant webhook has been registered.
 
-Two external blockers were observed during sandbox setup:
+Initial sandbox checks and subsequent resolution:
 
-- A server GET to the documented HandyPay `/api/v1/webhook-endpoints` API, authenticated with the test key, returned HTTP 403 and `error code: 1010` instead of the documented JSON response. The credential was not validated by a successful API response. Do not treat this as proof of an invalid key. Provider-side API access needs resolution before real checkout testing; no fingerprint or network-path workaround was attempted.
+- Initial scratch-server check: a server GET to the documented HandyPay `/api/v1/webhook-endpoints` API, authenticated with the test key, returned HTTP 403 and `error code: 1010` instead of the documented JSON response. The credential was not validated by a successful API response. Do not treat this as proof of an invalid key. A subsequent documented request from the deployed Vercel backend returned HTTP 200 and success:true on 23 October 2026. The sandbox credential is now validated from the application backend. This does not establish which difference caused the earlier failure.
 - An unauthenticated POST to the deployed preview payment webhook returned HTTP 401 with `Protected by Vercel Authentication`. Provider callbacks cannot pass that interactive login. A dedicated externally reachable callback, protected by the existing raw-body HMAC verification, must be configured before registration. Do not disable authentication for the whole application or place bypass credentials in webhook URLs.
+
+The integration now explicitly requests application/json, sends Content-Type only with request bodies, and includes session_id={CHECKOUT_SESSION_ID} in its checkout success URL. A signed-in, rate-limited preview-only sandbox-api-check action verifies endpoint-list access without exposing provider payloads or keys. Preview commit 06d9aa7 passed all 109 existing tests and the deployed check returned HTTP 200 with a successful JSON envelope.
 
 No successful checkout, webhook delivery, payment settlement or payment-triggered report unlock has been claimed. The next verification must use genuine sandbox provider responses and confirm payment intent references for refunds.
 
