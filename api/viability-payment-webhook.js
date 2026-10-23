@@ -1,0 +1,3 @@
+const {createService}=require('../lib/viability-accounts');
+module.exports=async function handler(req,res){res.setHeader('Cache-Control','no-store');if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});try{const chunks=[];let bytes=0;for await(const chunk of req){const part=Buffer.from(chunk);bytes+=part.length;if(bytes>1048576)return res.status(413).json({error:'Payload too large'});chunks.push(part);}const result=await createService().webhook(Buffer.concat(chunks),req.headers['x-handypay-signature']);return res.status(200).json(result);}catch(error){return res.status(error.status||500).json({error:error.status?error.message:'Payment processing is temporarily unavailable.'});}};
+module.exports.config={api:{bodyParser:false}};

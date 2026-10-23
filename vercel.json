@@ -23,6 +23,14 @@
       "dest": "/api/viability-report-page"
     },
     {
+      "src": "^/account$",
+      "dest": "/api/viability-account-page"
+    },
+    {
+      "src": "^/reports/[a-fA-F0-9-]{36}$",
+      "dest": "/api/viability-report-page"
+    },
+    {
       "handle": "filesystem"
     }
   ],
@@ -41,6 +49,9 @@
     },
     "api/viability-report-page.js": {
       "includeFiles": "viability-report.html"
+    },
+    "api/viability-account-page.js": {
+      "includeFiles": "account.html"
     }
   }
 }
