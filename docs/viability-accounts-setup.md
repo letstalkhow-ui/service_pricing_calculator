@@ -1,17 +1,17 @@
 # Account and payment integration
 
-This stage adds email-code sign-in, saved simulations, immutable report snapshots and entitlement-protected report access. Checkout is disabled by default. The migration was applied to the free `businessboosts-viability` Supabase project (`bfftokfwhhzeoxqtkycv`, Mumbai). Transactional database checks passed for owner access, cross-account isolation, duplicate purchase finalization, report immutability and entitlement revocation. All synthetic records were rolled back. Merchant payloads and real email sign-in remain unverified.
+This stage adds email-code sign-in, saved simulations, immutable report snapshots and entitlement-protected report access. Checkout is disabled by default. The migration was applied to the free `businessboosts-viability` Supabase project (`bfftokfwhhzeoxqtkycv`, Mumbai). Transactional database checks passed for owner access, cross-account isolation, duplicate purchase finalization, report immutability and entitlement revocation. All synthetic records were rolled back. Real email-code delivery, verification, authenticated account listing, saving a sample simulation and reopening its inputs were verified in the deployed preview on 23 October 2026. Merchant payment payloads remain unverified.
 
 ## Connection status
 
-Preview-branch configuration now includes the API URL, legacy anon key, random rate-limit salt and application origin. The server-only service-role key is still required through a secure provider dashboard configuration; the connector only exposes publishable keys. OTP template and custom SMTP setup remain pending. Checkout remains disabled. Security advisers reported informational notices only: private service tables deliberately have no client RLS policies; new indexes have not yet seen production traffic.
+Preview-branch configuration now includes the API URL, legacy anon key, random rate-limit salt and application origin. The server-only service-role key is saved as a Vercel Secret scoped to the preview branch. Brevo custom SMTP is enabled using the verified info@businessboosts.io sender. Both confirmation and magic-link templates now send {{ .Token }} codes. Checkout remains disabled. Security advisers reported informational notices only: private service tables deliberately have no client RLS policies; new indexes have not yet seen production traffic.
 
 ## Preview setup
 
 1. Identify the intended Supabase project and review its existing schema. Apply `supabase/migrations/20261023_viability_accounts.sql` through the migration tool. This migration creates new `bb_` tables and must run once.
 2. Add encrypted Vercel preview variables for this feature branch: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, a cryptographically random `AUTH_RATE_LIMIT_SALT`, and `VIABILITY_APP_ORIGIN`. Never put the service role key in public assets or client code.
-3. Set the Supabase email template to show `{{ .Token }}` for OTP sign-in. Configure custom SMTP before customer testing. The default Supabase sender is restricted. No real verification emails have been sent during implementation.
-4. Redeploy the preview. Test email verification, session refresh, sign-out, save/resume, and cross-account access with test accounts. Verify RLS directly, report immutability and concurrent duplicate webhook transactions in PostgreSQL before enabling checkout.
+3. Set the Supabase email template to show `{{ .Token }}` for OTP sign-in. Configure custom SMTP before customer testing. The default Supabase sender is restricted. A real verification email was delivered and its code successfully exchanged for an authenticated session.
+4. The preview was redeployed and email sign-in plus save/resume passed. Remaining checks include session refresh, sign-out revocation behavior and concurrent payment delivery under merchant sandbox traffic. RLS ownership, report immutability and sequential duplicate purchase finalization were verified directly in PostgreSQL. A clearly labelled QA sample: MoveWell Studio draft remains in the test account for review.
 
 ## Payment activation remains pending
 
