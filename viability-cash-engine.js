@@ -70,8 +70,8 @@ function run(input,scenarioKey='expected'){
     let extraRevenue=0,extraCost=0;
     for(const s of streams){
       const active=s.kind!=='one-off'||i===s.receiptMonth-1;
-      extraRevenue+=(s.revenueSchedule?s.revenueSchedule[i]:(active?s.monthlyRevenue:0))*config.additionalRevenue;
-      extraCost+=(s.costSchedule?s.costSchedule[i]:(active?s.monthlyRevenue-s.monthlyContribution:0))*config.directCost;
+      extraRevenue+=(s.revenueSchedule?s.revenueSchedule[i]:(active?(s.kind==='one-off'?nonnegative(s.amount,'One-off amount'):s.monthlyRevenue):0))*config.additionalRevenue;
+      extraCost+=(s.costSchedule?s.costSchedule[i]:(active?(s.kind==='one-off'?nonnegative(s.directCost,'One-off cost'):s.monthlyRevenue-s.monthlyContribution):0))*config.directCost;
     }
     const revenue=volume*unit.effective_price+extraRevenue;
     const collectible=revenue*(1-uncollected/100);
