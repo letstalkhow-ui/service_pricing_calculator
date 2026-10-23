@@ -24,6 +24,12 @@ create table public.bb_payment_events (
  event_type text not null, created_at timestamptz not null default now()
 );
 create table public.bb_rate_limits (bucket text primary key, window_start timestamptz not null default now(), hits integer not null default 0);
+create index bb_simulations_owner_updated on public.bb_simulations(owner_id,updated_at desc);
+create index bb_checkout_orders_owner on public.bb_checkout_orders(owner_id);
+create index bb_checkout_orders_simulation on public.bb_checkout_orders(simulation_id);
+create index bb_reports_owner_created on public.bb_reports(owner_id,created_at desc);
+create index bb_entitlements_owner on public.bb_entitlements(owner_id);
+create index bb_payment_events_order on public.bb_payment_events(order_id);
 alter table public.bb_simulations enable row level security;
 alter table public.bb_checkout_orders enable row level security;
 alter table public.bb_reports enable row level security;
@@ -34,15 +40,15 @@ revoke all on public.bb_simulations, public.bb_checkout_orders, public.bb_report
 grant select,insert,update on public.bb_simulations to authenticated;
 grant select on public.bb_reports,public.bb_entitlements to authenticated;
 grant all on public.bb_simulations, public.bb_checkout_orders, public.bb_reports, public.bb_entitlements, public.bb_payment_events, public.bb_rate_limits to service_role;
-create policy simulations_read on public.bb_simulations for select to authenticated using(owner_id=auth.uid());
-create policy simulations_insert on public.bb_simulations for insert to authenticated with check(owner_id=auth.uid());
-create policy simulations_update on public.bb_simulations for update to authenticated using(owner_id=auth.uid()) with check(owner_id=auth.uid());
-create policy entitlements_read on public.bb_entitlements for select to authenticated using(owner_id=auth.uid());
-create policy reports_read on public.bb_reports for select to authenticated using(owner_id=auth.uid() and exists(select 1 from public.bb_entitlements e where e.report_id=bb_reports.id and e.owner_id=auth.uid() and e.active));
+create policy simulations_read on public.bb_simulations for select to authenticated using(owner_id=(select auth.uid()));
+create policy simulations_insert on public.bb_simulations for insert to authenticated with check(owner_id=(select auth.uid()));
+create policy simulations_update on public.bb_simulations for update to authenticated using(owner_id=(select auth.uid())) with check(owner_id=(select auth.uid()));
+create policy entitlements_read on public.bb_entitlements for select to authenticated using(owner_id=(select auth.uid()));
+create policy reports_read on public.bb_reports for select to authenticated using(owner_id=(select auth.uid()) and exists(select 1 from public.bb_entitlements e where e.report_id=bb_reports.id and e.owner_id=(select auth.uid()) and e.active));
 create function public.bb_immutable_report() returns trigger language plpgsql set search_path=public as $$
 begin raise exception 'Purchased report snapshots cannot be updated'; end; $$;
 create trigger immutable_report before update on public.bb_reports for each row execute function public.bb_immutable_report();
-create function public.bb_rate_limit(p_bucket text,p_seconds integer,p_limit integer) returns boolean language plpgsql security definer set search_path=public as $$
+create function public.bb_rate_limit(p_bucket text,p_seconds integer,p_limit integer) returns boolean language plpgsql security invoker set search_path=public as $$
 declare r public.bb_rate_limits;
 begin
  if p_seconds<1 or p_limit<1 then raise exception 'Invalid rate limit'; end if;
@@ -52,7 +58,7 @@ begin
  if r.hits>=p_limit then return false; end if;
  update public.bb_rate_limits set hits=hits+1 where bucket=p_bucket;return true;
 end; $$;
-create function public.bb_finalize_purchase(p_order uuid,p_event text,p_hash text,p_session text,p_amount integer,p_currency text,p_mode text,p_intent text) returns uuid language plpgsql security definer set search_path=public as $$
+create function public.bb_finalize_purchase(p_order uuid,p_event text,p_hash text,p_session text,p_amount integer,p_currency text,p_mode text,p_intent text) returns uuid language plpgsql security invoker set search_path=public as $$
 declare o public.bb_checkout_orders; prior public.bb_payment_events; rid uuid;
 begin
  select * into o from public.bb_checkout_orders where id=p_order for update;
@@ -69,7 +75,7 @@ begin
  update public.bb_checkout_orders set status='paid',payment_intent=p_intent where id=o.id;
  return rid;
 end; $$;
-create function public.bb_revoke_purchase(p_event text,p_hash text,p_intent text,p_type text) returns boolean language plpgsql security definer set search_path=public as $$
+create function public.bb_revoke_purchase(p_event text,p_hash text,p_intent text,p_type text) returns boolean language plpgsql security invoker set search_path=public as $$
 declare o public.bb_checkout_orders; prior public.bb_payment_events;
 begin
  select * into o from public.bb_checkout_orders where payment_intent=p_intent for update;

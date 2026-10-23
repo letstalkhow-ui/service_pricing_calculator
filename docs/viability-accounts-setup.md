@@ -1,6 +1,10 @@
 # Account and payment integration
 
-This stage adds email-code sign-in, saved simulations, immutable report snapshots and entitlement-protected report access. Checkout is disabled by default. The migration has not been applied to a remote database. Local tests use provider stubs; they do not establish that PostgreSQL policies or merchant payment payloads work end to end.
+This stage adds email-code sign-in, saved simulations, immutable report snapshots and entitlement-protected report access. Checkout is disabled by default. The migration was applied to the free `businessboosts-viability` Supabase project (`bfftokfwhhzeoxqtkycv`, Mumbai). Transactional database checks passed for owner access, cross-account isolation, duplicate purchase finalization, report immutability and entitlement revocation. All synthetic records were rolled back. Merchant payloads and real email sign-in remain unverified.
+
+## Connection status
+
+Preview-branch configuration now includes the API URL, legacy anon key, random rate-limit salt and application origin. The server-only service-role key is still required through a secure provider dashboard configuration; the connector only exposes publishable keys. OTP template and custom SMTP setup remain pending. Checkout remains disabled. Security advisers reported informational notices only: private service tables deliberately have no client RLS policies; new indexes have not yet seen production traffic.
 
 ## Preview setup
 
