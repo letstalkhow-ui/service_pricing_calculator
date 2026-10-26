@@ -2,18 +2,7 @@ import { Buffer } from 'node:buffer';
 import { processWebhook } from '../_shared/viability-webhook.mjs';
 
 const json=(value,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
-// Temporary sandbox evidence: only allowlisted amounts/flags, never customer data or credentials.
-export function refundEvidence(data,depth=0){
- const out={};
- for(const key of ['amount','amount_refunded','amount_remaining','refund_amount','amount_total'])if(Number.isSafeInteger(data?.[key])&&data[key]>=0)out[key]=data[key];
- if(typeof data?.refunded==='boolean')out.refunded=data.refunded;
- if(typeof data?.currency==='string'&&/^[a-z]{3}$/i.test(data.currency))out.currency=data.currency;
- if(['pending','succeeded','failed','canceled','complete','refunded','partially_refunded'].includes(data?.status))out.status=data.status;
- if(depth<2&&data?.object&&typeof data.object==='object')out.object=refundEvidence(data.object,depth+1);
- if(depth<2&&Array.isArray(data?.refunds?.data))out.refunds=data.refunds.data.slice(0,10).map(value=>refundEvidence(value,depth+1));
- return out;
-}
-export function createHandler(env,fetcher=fetch,diagnostic=value=>console.info(JSON.stringify(value))){
+export function createHandler(env,fetcher=fetch){
  return async request=>{
   if(request.method!=='POST')return json({error:'Method not allowed.'},405);
   // Reject unsigned traffic before reading a body or accessing any credential/database.
@@ -38,11 +27,7 @@ export function createHandler(env,fetcher=fetch,diagnostic=value=>console.info(J
      if(name==='bb_revoke_purchase'||name==='bb_record_refund'){
       const rows=await db.rest('bb_checkout_orders?'+new URLSearchParams({payment_intent:'eq.'+data.p_intent,mode:'eq.test',select:'id'}));
       if(rows?.length!==1)throw Object.assign(new Error('Sandbox payment reference needs reconciliation.'),{status:409});
-      // This path is reached only after HMAC verification and matching a sandbox order.
-      if(name==='bb_record_refund'&&rows[0].id==='353dffc1-506f-49da-ab4b-f794096ca055'){
-       const event=JSON.parse(raw.toString('utf8'));
-       diagnostic({tag:'bb_sandbox_refund_evidence',event_id:data.p_event,fields:refundEvidence(event.data)});
-      }
+
      }
      return api(env.SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(data)});
     }
