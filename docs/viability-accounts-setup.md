@@ -56,7 +56,7 @@ This verifies checkout creation, user sandbox payment, genuine callback processi
 
 On 26 October 2026, a rollback-only database transaction tested the completed sandbox order. Repeating its original finalization returned the same report without duplication. Refund revocation disabled its entitlement; repeating that refund succeeded safely. An authenticated owner query could no longer see the refunded report. The stored report snapshot stayed unchanged, and a late success notification was rejected rather than restoring access. The transaction was rolled back and the order was rechecked as paid with one active entitlement and one original event. All 22 focused account/webhook tests passed.
 
-These are database and local handler checks, not genuine provider redelivery/refund tests. Those merchant tests remain pending: the merchant portal required a Cloudflare human-verification check before sign-in.
+These are database and local handler checks, not genuine provider redelivery/refund tests. After user sign-in and user submission of the full $19 sandbox refund, a genuine charge.refunded notification arrived at 06:33:38 UTC on 26 October 2026. The order changed to revoked, its entitlement became inactive, and reopening the report showed Report unavailable. The merchant transaction detail still displayed Completed after refresh, so its displayed status alone is not a reliable refund check. Provider redelivery remains unverified. A stale loading notice on denied report access was corrected in source.
 
 ## Payment activation remains pending
 
