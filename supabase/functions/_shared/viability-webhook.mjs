@@ -16,6 +16,12 @@ export async function processWebhook(raw,header,{config,env,db,handypay}){
   const hash=crypto.createHash('sha256').update(raw).digest('hex'),data=event.data;
   if(['charge.refunded','charge.dispute.created'].includes(event.type)){
    const intent=data?.payment_intent;if(typeof intent!=='string'||!/^pi_[A-Za-z0-9_]+$/.test(intent))throw new platform.HttpError(422,'Payment reference needs reconciliation.');
+   if(event.type==='charge.refunded'){
+    // HandyPay sandbox charge payload verified 2026-10-26. Amounts are integer minor units.
+    if(!Number.isSafeInteger(data.amount)||data.amount<=0||!Number.isSafeInteger(data.amount_refunded)||data.amount_refunded<=0||data.amount_refunded>data.amount||typeof data.currency!=='string'||!/^[a-z]{3}$/i.test(data.currency)||typeof data.refunded!=='boolean'||data.refunded!==(data.amount_refunded===data.amount)||data.status!=='succeeded')throw new platform.HttpError(422,'Refund amount needs reconciliation.');
+    const recorded=await db.rpc('bb_record_refund',{p_event:event.id,p_hash:hash,p_intent:intent,p_amount:data.amount,p_currency:data.currency.toLowerCase(),p_refunded:data.amount_refunded,p_mode:config.mode});
+    if(!recorded)throw new platform.HttpError(409,'Payment has not yet been reconciled.');return {received:true};
+   }
    const revoked=await db.rpc('bb_revoke_purchase',{p_event:event.id,p_hash:hash,p_intent:intent,p_type:event.type});if(!revoked)throw new platform.HttpError(409,'Payment has not yet been reconciled.');return {received:true};
   }
   if(!['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type))return {received:true,ignored:true};
