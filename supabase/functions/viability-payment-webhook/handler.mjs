@@ -35,11 +35,11 @@ export function createHandler(env,fetcher=fetch,diagnostic=value=>console.info(J
     rest:async path=>api(env.SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+path,{headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,Accept:'application/json'}}),
     rpc:async(name,data)=>{
      // The sandbox receiver must never mutate a live order, including refunds/disputes.
-     if(name==='bb_revoke_purchase'){
+     if(name==='bb_revoke_purchase'||name==='bb_record_refund'){
       const rows=await db.rest('bb_checkout_orders?'+new URLSearchParams({payment_intent:'eq.'+data.p_intent,mode:'eq.test',select:'id'}));
       if(rows?.length!==1)throw Object.assign(new Error('Sandbox payment reference needs reconciliation.'),{status:409});
       // This path is reached only after HMAC verification and matching a sandbox order.
-      if(data.p_type==='charge.refunded'&&rows[0].id==='353dffc1-506f-49da-ab4b-f794096ca055'){
+      if(name==='bb_record_refund'&&rows[0].id==='353dffc1-506f-49da-ab4b-f794096ca055'){
        const event=JSON.parse(raw.toString('utf8'));
        diagnostic({tag:'bb_sandbox_refund_evidence',event_id:data.p_event,fields:refundEvidence(event.data)});
       }
