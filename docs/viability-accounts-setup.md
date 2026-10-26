@@ -52,6 +52,12 @@ The user performed the final Pay action on 26 October 2026 after automatic brows
 
 This verifies checkout creation, user sandbox payment, genuine callback processing, order finalization, entitlement creation and owner report access. It does not establish merchant duplicate-delivery, refund/dispute or live payout behavior. No real money was charged; production/live payments remain disabled.
 
+## Duplicate and revocation checks
+
+On 26 October 2026, a rollback-only database transaction tested the completed sandbox order. Repeating its original finalization returned the same report without duplication. Refund revocation disabled its entitlement; repeating that refund succeeded safely. An authenticated owner query could no longer see the refunded report. The stored report snapshot stayed unchanged, and a late success notification was rejected rather than restoring access. The transaction was rolled back and the order was rechecked as paid with one active entitlement and one original event. All 22 focused account/webhook tests passed.
+
+These are database and local handler checks, not genuine provider redelivery/refund tests. Those merchant tests remain pending: the merchant portal required a Cloudflare human-verification check before sign-in.
+
 ## Payment activation remains pending
 
 Approved launch price: US$19 per full saved report, one-time purchase. BusinessBoosts absorbs processing and applicable conversion/banking charges. Preview configuration stores 1900 minor units and usd; sandbox checkout is enabled only on the feature preview branch for sandbox verification. Check the first live payout for actual net MUR received and review pricing after 20–30 purchases. No automatic price change is authorized. Do not enable live payments before launch verification.
