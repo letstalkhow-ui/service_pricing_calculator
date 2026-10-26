@@ -1,10 +1,10 @@
 # Account and payment integration
 
-This stage adds email-code sign-in, saved simulations, immutable report snapshots and entitlement-protected report access. Checkout is disabled by default. The migration was applied to the free `businessboosts-viability` Supabase project (`bfftokfwhhzeoxqtkycv`, Mumbai). Transactional database checks passed for owner access, cross-account isolation, duplicate purchase finalization, report immutability and entitlement revocation. All synthetic records were rolled back. Real email-code delivery, verification, authenticated account listing, saving a sample simulation and reopening its inputs were verified in the deployed preview on 23 October 2026. Merchant payment payloads remain unverified.
+This stage adds email-code sign-in, saved simulations, immutable report snapshots and entitlement-protected report access. Checkout is disabled by default. The migration was applied to the free `businessboosts-viability` Supabase project (`bfftokfwhhzeoxqtkycv`, Mumbai). Transactional database checks passed for owner access, cross-account isolation, duplicate purchase finalization, report immutability and entitlement revocation. All synthetic records were rolled back. Real email-code delivery, verification, authenticated account listing, saving a sample simulation and reopening its inputs were verified in the deployed preview on 23 October 2026. Genuine sandbox checkout completion and owner report access passed on 26 October 2026; merchant duplicate/refund delivery checks remain pending.
 
 ## Connection status
 
-Preview-branch configuration now includes the API URL, legacy anon key, random rate-limit salt and application origin. The server-only service-role key is saved as a Vercel Secret scoped to the preview branch. Brevo custom SMTP is enabled using the verified info@businessboosts.io sender. Both confirmation and magic-link templates now send {{ .Token }} codes. Checkout remains disabled. Security advisers reported informational notices only: private service tables deliberately have no client RLS policies; new indexes have not yet seen production traffic.
+Preview-branch configuration now includes the API URL, legacy anon key, random rate-limit salt and application origin. The server-only service-role key is saved as a Vercel Secret scoped to the preview branch. Brevo custom SMTP is enabled using the verified info@businessboosts.io sender. Both confirmation and magic-link templates now send {{ .Token }} codes. Checkout is enabled only on the feature preview branch in test mode; live checkout remains disabled. Security advisers reported informational notices only: private service tables deliberately have no client RLS policies; new indexes have not yet seen production traffic.
 
 ## Preview setup
 
@@ -15,7 +15,7 @@ Preview-branch configuration now includes the API URL, legacy anon key, random r
 
 ## Sandbox connection status
 
-The dedicated HandyPay test key was saved as `HANDYPAY_API_KEY`, a Vercel Secret scoped only to `feature/viability-simulator-v1`. No live key was used. Checkout remains disabled. A dedicated Supabase sandbox webhook has now been registered as described below.
+The dedicated HandyPay test key was saved as `HANDYPAY_API_KEY`, a Vercel Secret scoped only to `feature/viability-simulator-v1`. No live key was used. Checkout is enabled only on the feature preview branch in test mode; live checkout remains disabled. A dedicated Supabase sandbox webhook has now been registered as described below.
 
 Initial sandbox checks and subsequent resolution:
 
@@ -24,15 +24,15 @@ Initial sandbox checks and subsequent resolution:
 
 The integration now explicitly requests application/json, sends Content-Type only with request bodies, and includes session_id={CHECKOUT_SESSION_ID} in its checkout success URL. A signed-in, rate-limited preview-only sandbox-api-check action verifies endpoint-list access without exposing provider payloads or keys. Preview commit 06d9aa7 passed all 109 existing tests and the deployed check returned HTTP 200 with a successful JSON envelope.
 
-No successful checkout, webhook delivery, payment settlement or payment-triggered report unlock has been claimed. The next verification must use genuine sandbox provider responses and confirm payment intent references for refunds.
+The initial API check did not prove payment completion. The genuine sandbox payment and report unlock were subsequently verified on 26 October 2026, as recorded below.
 
 ## Dedicated sandbox callback
 
-A sandbox-only Supabase Edge Function, `viability-payment-webhook`, is deployed in project `bfftokfwhhzeoxqtkycv`. Its callback URL is `https://bfftokfwhhzeoxqtkycv.supabase.co/functions/v1/viability-payment-webhook`. This avoids the Vercel preview login gate without changing application protection. An unauthenticated POST reached the handler and returned its own HTTP 401 `Invalid payment signature.` response, with an Edge execution ID. The Vercel authentication barrier is therefore resolved for this dedicated receiver; merchant delivery remains untested.
+A sandbox-only Supabase Edge Function, `viability-payment-webhook`, is deployed in project `bfftokfwhhzeoxqtkycv`. Its callback URL is `https://bfftokfwhhzeoxqtkycv.supabase.co/functions/v1/viability-payment-webhook`. This avoids the Vercel preview login gate without changing application protection. An unauthenticated POST reached the handler and returned its own HTTP 401 `Invalid payment signature.` response, with an Edge execution ID. The Vercel authentication barrier is therefore resolved for this dedicated receiver; genuine sandbox merchant delivery subsequently passed on 26 October 2026.
 
 The function uses the same shared payment verifier as the Vercel handler. It re-fetches settled sessions, matches order/session/amount/currency/mode, requires canonical payment intent references, and delegates idempotency and immutable report creation to the existing database RPC. The sandbox receiver rejects live keys/events and checks test-order ownership before refund/dispute revocation. All 116 local tests passed, including unsigned/wrong-signature, oversized-body, live-mode rejection, verified purchase, and live-order refund isolation cases.
 
-Activation requires Supabase Edge Function secrets `BB_HANDYPAY_TEST_KEY` (a dedicated hp_test_ key), `BB_HANDYPAY_WEBHOOK_SECRET` (the secret returned when this callback is registered with HandyPay), and `BB_SANDBOX_WEBHOOK_ENABLED=true`. Supabase supplies SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to the function. All three secrets are now configured. Checkout stays disabled pending genuine merchant payment verification.
+Activation requires Supabase Edge Function secrets `BB_HANDYPAY_TEST_KEY` (a dedicated hp_test_ key), `BB_HANDYPAY_WEBHOOK_SECRET` (the secret returned when this callback is registered with HandyPay), and `BB_SANDBOX_WEBHOOK_ENABLED=true`. Supabase supplies SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to the function. All three secrets are now configured. Sandbox checkout is now enabled only in the feature preview; live checkout remains disabled.
 
 The existing Vercel test key remains a non-readable Sensitive variable. A dedicated HandyPay test key named BusinessBoosts Supabase Sandbox Callback was created by the user and stored only in Supabase secrets. HandyPay registered callback ID `f85e2827-cee3-46ca-ae4f-58a5be92d2f3` for checkout completion, asynchronous success, refund and dispute-created events. Its one-time signing secret was saved in Supabase without printing it or committing it to source.
 
@@ -40,17 +40,27 @@ On 23 October 2026, a harmless locally signed `bb.signature_probe` event reached
 
 The temporary registration helper `viability-webhook-setup` retained platform JWT verification throughout. The eventual administrator check also proved service-only database RPC access before registration. After registration, its setup flag was set false and the deployed function was replaced with an unconditional disabled response while retaining verify_jwt=true. Automatic review rejected a proposed verify_jwt=false change to this helper; that proposal was not used. No platform authentication bypass or Vercel protection change was required. Temporary credential variables and the key display were cleared/closed.
 
-No production key, real payment or paid plan was used. Next verify genuine checkout completion and its merchant payload, then duplicate/refund behavior and report access.
+No production key, real payment or paid plan was used. Genuine sandbox completion and report access are now verified. Merchant duplicate/refund delivery checks remain pending.
+
+## Preview checkout verified
+
+On 26 October 2026, checkout was enabled only for the feature preview branch with the pinned external sandbox callback URL. The configuration requires a test key and VERCEL_ENV=preview to use this callback arrangement; production/live activation requirements remain unchanged. The checkout return URL uses the request origin only after it passes the existing trusted-origin check, keeping customers on the preview that created their order. All 117 tests passed.
+
+The signed-in QA sample created sandbox order `ea5bd54e-7a81-4b3d-a9d4-5efa344e45d6`, amount 1900 USD minor units. Its provider checkout session was stored successfully, and the hosted checkout visibly showed Sandbox and $19.00. Stripe's order-summary tool confirmed livemode=false and totalAmount=1900. Only Stripe's published 4242 test card and fictitious billing details were entered; saving payment information was deselected.
+
+The user performed the final Pay action on 26 October 2026 after automatic browser review required user submission. No alternate agent submission route was attempted. The genuine provider callback finalized the order as paid in test mode, recorded its payment intent reference, and created one report with an active entitlement. Database inspection found one processed payment event for this order. Report `201a560b-81b2-46a8-8cc4-edb91ffc3875` was created at 06:16:46 UTC. The account displayed “Payment verified. Your report is listed below.” Opening the report rendered the purchased report and its fixed purchase snapshot successfully.
+
+This verifies checkout creation, user sandbox payment, genuine callback processing, order finalization, entitlement creation and owner report access. It does not establish merchant duplicate-delivery, refund/dispute or live payout behavior. No real money was charged; production/live payments remain disabled.
 
 ## Payment activation remains pending
 
-Approved launch price: US$19 per full saved report, one-time purchase. BusinessBoosts absorbs processing and applicable conversion/banking charges. Preview configuration stores 1900 minor units and usd; checkout remains disabled pending sandbox verification. Check the first live payout for actual net MUR received and review pricing after 20–30 purchases. No automatic price change is authorized. Do not enable live payments before launch verification.
+Approved launch price: US$19 per full saved report, one-time purchase. BusinessBoosts absorbs processing and applicable conversion/banking charges. Preview configuration stores 1900 minor units and usd; sandbox checkout is enabled only on the feature preview branch for sandbox verification. Check the first live payout for actual net MUR received and review pricing after 20–30 purchases. No automatic price change is authorized. Do not enable live payments before launch verification.
 
 For sandbox testing only, configure `HANDYPAY_API_KEY` (`hp_test_...`), `HANDYPAY_WEBHOOK_SECRET`, an approved `VIABILITY_REPORT_AMOUNT_MINOR`, `VIABILITY_REPORT_CURRENCY`, and `VIABILITY_CHECKOUT_ENABLED=true`. Confirm that the approved currency and its minor-unit convention are supported by the merchant account.
 
 Register `/api/viability-payment-webhook` with HandyPay. HMAC validation uses the exact raw request body and `X-HandyPay-Signature`. A browser return never grants access. The server re-fetches settled payment details and checks the stored session, amount, currency and mode before calling the atomic purchase function.
 
-Confirm the merchant's actual event payload includes a canonical `payment_intent` reference and that refund/dispute events use the expected shape. HandyPay's published session schema does not promise that reference. Missing references fail closed and require reconciliation. Current policy revokes access on any `charge.refunded` (including partial refunds) or `charge.dispute.created`; confirm this commercial policy before activation. Test duplicate, reordered, delayed, invalid-signature and mismatched-amount events. A refund received before payment finalization returns a retryable error.
+The successful sandbox purchase recorded its canonical `payment_intent` reference. Still confirm refund/dispute events use the expected shape. HandyPay's published session schema does not promise that reference. Missing references fail closed and require reconciliation. Current policy revokes access on any `charge.refunded` (including partial refunds) or `charge.dispute.created`; confirm this commercial policy before activation. Test duplicate, reordered, delayed, invalid-signature and mismatched-amount events. A refund received before payment finalization returns a retryable error.
 
 Live checkout additionally requires the production environment, a live key and explicit `VIABILITY_LIVE_PAYMENTS_ENABLED=true`. These flags alone do not replace the pending merchant and database tests. Production configuration has not been changed.
 
