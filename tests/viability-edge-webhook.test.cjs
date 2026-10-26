@@ -43,3 +43,19 @@ test('refund without canonical payment reference cannot reach database',async()=
  assert.equal((await h(request({id:'evt_bad_refund',type:'charge.refunded',data:{payment_intent:'unverified'}}))).status,422);
  assert.equal(calls,0);
 });
+test('refund evidence excludes customer, metadata, secrets and arbitrary strings',async()=>{
+ const {refundEvidence}=await import('../supabase/functions/viability-payment-webhook/handler.mjs');
+ assert.deepEqual(refundEvidence({amount:1900,amount_refunded:500,refunded:false,currency:'usd',status:'succeeded',email:'private',metadata:{secret:'private'},refund_amount:'private',refunds:{data:[{amount:500,status:'succeeded',customer:'private'}]}}),{amount:1900,amount_refunded:500,refunded:false,currency:'usd',status:'succeeded',refunds:[{amount:500,status:'succeeded'}]});
+});
+test('refund diagnostics require valid signature and the designated sandbox order',async()=>{
+ const {createHandler}=await import('../supabase/functions/viability-payment-webhook/handler.mjs');
+ const logs=[];let order=oid;
+ const h=createHandler(env,async url=>Response.json(url.includes('/rpc/')?true:[{id:order}]),value=>logs.push(value));
+ const payload={id:'evt_diagnostic',type:'charge.refunded',livemode:false,data:{payment_intent:'pi_fixture',amount:1900,amount_refunded:500,email:'private'}};
+ assert.equal((await h(request(payload))).status,200);assert.equal(logs.length,0);
+ order='353dffc1-506f-49da-ab4b-f794096ca055';
+ assert.equal((await h(request(payload,'wrong'))).status,401);assert.equal(logs.length,0);
+ assert.equal((await h(request({...payload,livemode:true}))).status,400);assert.equal(logs.length,0);
+ assert.equal((await h(request(payload))).status,200);
+ assert.deepEqual(logs,[{tag:'bb_sandbox_refund_evidence',event_id:'evt_diagnostic',fields:{amount:1900,amount_refunded:500}}]);
+});
