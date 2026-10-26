@@ -1,6 +1,6 @@
 # Account and payment integration
 
-This stage adds email-code sign-in, saved simulations, immutable report snapshots and entitlement-protected report access. Checkout is disabled by default. The migration was applied to the free `businessboosts-viability` Supabase project (`bfftokfwhhzeoxqtkycv`, Mumbai). Transactional database checks passed for owner access, cross-account isolation, duplicate purchase finalization, report immutability and entitlement revocation. All synthetic records were rolled back. Real email-code delivery, verification, authenticated account listing, saving a sample simulation and reopening its inputs were verified in the deployed preview on 23 October 2026. Genuine sandbox checkout completion and owner report access passed on 26 October 2026; merchant duplicate/refund delivery checks remain pending.
+This stage adds email-code sign-in, saved simulations, immutable report snapshots and entitlement-protected report access. Checkout is disabled by default. The migration was applied to the free `businessboosts-viability` Supabase project (`bfftokfwhhzeoxqtkycv`, Mumbai). Transactional database checks passed for owner access, cross-account isolation, duplicate purchase finalization, report immutability and entitlement revocation. All synthetic records were rolled back. Real email-code delivery, verification, authenticated account listing, saving a sample simulation and reopening its inputs were verified in the deployed preview on 23 October 2026. Genuine sandbox checkout completion and owner report access passed on 26 October 2026; merchant duplicate delivery remains unverified; genuine refund delivery and access revocation passed.
 
 ## Connection status
 
@@ -40,7 +40,7 @@ On 23 October 2026, a harmless locally signed `bb.signature_probe` event reached
 
 The temporary registration helper `viability-webhook-setup` retained platform JWT verification throughout. The eventual administrator check also proved service-only database RPC access before registration. After registration, its setup flag was set false and the deployed function was replaced with an unconditional disabled response while retaining verify_jwt=true. Automatic review rejected a proposed verify_jwt=false change to this helper; that proposal was not used. No platform authentication bypass or Vercel protection change was required. Temporary credential variables and the key display were cleared/closed.
 
-No production key, real payment or paid plan was used. Genuine sandbox completion and report access are now verified. Merchant duplicate/refund delivery checks remain pending.
+No production key, real payment or paid plan was used. Genuine sandbox completion and report access are now verified. Merchant duplicate delivery remains unverified; genuine refund delivery and access revocation passed.
 
 ## Preview checkout verified
 
@@ -50,7 +50,7 @@ The signed-in QA sample created sandbox order `ea5bd54e-7a81-4b3d-a9d4-5efa344e4
 
 The user performed the final Pay action on 26 October 2026 after automatic browser review required user submission. No alternate agent submission route was attempted. The genuine provider callback finalized the order as paid in test mode, recorded its payment intent reference, and created one report with an active entitlement. Database inspection found one processed payment event for this order. Report `201a560b-81b2-46a8-8cc4-edb91ffc3875` was created at 06:16:46 UTC. The account displayed “Payment verified. Your report is listed below.” Opening the report rendered the purchased report and its fixed purchase snapshot successfully.
 
-This verifies checkout creation, user sandbox payment, genuine callback processing, order finalization, entitlement creation and owner report access. It does not establish merchant duplicate-delivery, refund/dispute or live payout behavior. No real money was charged; production/live payments remain disabled.
+This verifies checkout creation, user sandbox payment, genuine callback processing, order finalization, entitlement creation and owner report access. The purchase test alone does not establish duplicate-delivery, refund/dispute or live payout behavior; the subsequent refund result is recorded below. No real money was charged; production/live payments remain disabled.
 
 ## Duplicate and revocation checks
 
@@ -66,7 +66,7 @@ For sandbox testing only, configure `HANDYPAY_API_KEY` (`hp_test_...`), `HANDYPA
 
 Register `/api/viability-payment-webhook` with HandyPay. HMAC validation uses the exact raw request body and `X-HandyPay-Signature`. A browser return never grants access. The server re-fetches settled payment details and checks the stored session, amount, currency and mode before calling the atomic purchase function.
 
-The successful sandbox purchase recorded its canonical `payment_intent` reference. Still confirm refund/dispute events use the expected shape. HandyPay's published session schema does not promise that reference. Missing references fail closed and require reconciliation. Current policy revokes access on any `charge.refunded` (including partial refunds) or `charge.dispute.created`; confirm this commercial policy before activation. Test duplicate, reordered, delayed, invalid-signature and mismatched-amount events. A refund received before payment finalization returns a retryable error.
+The successful sandbox purchase recorded its canonical `payment_intent` reference. The genuine refund event shape passed; dispute delivery remains unverified. HandyPay's published session schema does not promise that reference. Missing references fail closed and require reconciliation. Current policy revokes access on any `charge.refunded` (including partial refunds) or `charge.dispute.created`; confirm this commercial policy before activation. Test duplicate, reordered, delayed, invalid-signature and mismatched-amount events. A refund received before payment finalization returns a retryable error.
 
 Live checkout additionally requires the production environment, a live key and explicit `VIABILITY_LIVE_PAYMENTS_ENABLED=true`. These flags alone do not replace the pending merchant and database tests. Production configuration has not been changed.
 
@@ -75,3 +75,16 @@ Live checkout additionally requires the production environment, a live key and e
 Saved simulation inputs are editable by their owner. Purchase inputs are revalidated on the server and public country data is fetched independently. Purchased reports are stored separately, have no authenticated update privilege, and have an update-blocking trigger. Refunds revoke the entitlement without rewriting the report. Clients query report data with the user's token; RLS requires both ownership and an active entitlement. The service role is reserved for rate limits, private orders and atomic payment transactions.
 
 Operational follow-up: add scheduled expiry cleanup for old rate-limit buckets and abandoned checkout orders, payment reconciliation alerts, and retention/deletion procedures before public launch. If checkout creation fails after the pending order is stored, that order stays private and does not grant access.
+
+## Pre-launch review, 26 October 2026
+
+The inspected HandyPay developer menu and public API reference expose no provider replay control or replay endpoint. Provider redelivery remains an explicit verification gap, not a completed test. Do not create another payment or refund merely to imitate redelivery.
+
+All 123 local tests passed. Additional handler tests cover refund/dispute delivery before reconciliation, stable event identity and raw-body hashes across repeated requests, retryable database failures without internal-detail leakage, and rejection of refunds without canonical payment references. Database idempotency was verified separately in rollback-only transactions; mocked handler tests do not replace merchant-delivery verification.
+
+Remaining release gates:
+- Resolve provider replay/dispute verification and complete signed-in session refresh/sign-out checks.
+- Confirm the commercial rule for partial refunds: current code revokes the whole report on any refund. Full refunds were verified; partial-refund policy is not yet approved.
+- Complete payment reconciliation monitoring, rate-limit expiry cleanup, and retention/deletion procedures.
+- Configure and verify the production callback and live credentials separately. The deployed Supabase callback deliberately rejects live payments; it cannot be reused unchanged for launch.
+- Perform a limited live validation only after explicit activation approval, then target the first 10 paid reports at US$19 each. This is US$190 gross before processing, conversion and bank charges; no revenue is guaranteed.
