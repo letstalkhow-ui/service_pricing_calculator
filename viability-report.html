@@ -17,7 +17,7 @@ try{
  if(match){
   document.getElementById('editionNotice').textContent='Purchased report. Loading your saved report…';
   const response=await fetch('/api/viability-account?action=report&id='+encodeURIComponent(match[1]),{credentials:'same-origin'});
-  if(!response.ok){container.innerHTML='<div class="empty"><h1>'+ (response.status===401?'Sign in to view your report':'Report unavailable')+'</h1><p>Open your account to check your saved reports and access.</p><a class="button" href="/account">My BusinessBoosts</a></div>';return;}
+  if(!response.ok){document.getElementById('editionNotice').textContent='Report access could not be confirmed. Check your account below.';container.innerHTML='<div class="empty"><h1>'+ (response.status===401?'Sign in to view your report':'Report unavailable')+'</h1><p>Open your account to check your saved reports and access.</p><a class="button" href="/account">My BusinessBoosts</a></div>';return;}
   snapshot=BusinessBoostsReport.validate((await response.json()).snapshot);
   if(snapshot.status!=='purchased')throw new Error('This saved report is unavailable.');
   document.getElementById('editionNotice').textContent='Purchased report. Your answers, data and calculations are fixed to the version captured for this purchase.';
