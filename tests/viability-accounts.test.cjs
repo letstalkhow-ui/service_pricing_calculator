@@ -35,3 +35,12 @@ test('failed refresh cannot grant account access',async()=>{
 test('sign-out clears both cookies even when provider logout is unavailable',async()=>{
  const s=createService({env,db:{request:async()=>{throw new Error('offline')}}});const r=res(),q=req('sign-out','POST',{});q.headers.cookie='__Host-bb_access=old';assert.deepEqual(await s.handle(q,r),{signed_out:true});assert.equal(r.headers['Set-Cookie'].length,2);for(const c of r.headers['Set-Cookie'])assert.match(c,/Max-Age=0/);assert.equal(r.headers['Cache-Control'],'no-store');
 });
+
+test('hosted sandbox reconciliation filters by verified owner and never writes access',async()=>{
+ let path;const q=req('sandbox-reconcile');q.query.id=oid;
+ const s=createService({env:{...env,VERCEL_ENV:'preview',HANDYPAY_API_KEY:'hp_test_fixture'},db:{user:async()=>({id:uid,email:'qa@example.com'}),rate:async()=>{},rest:async p=>{path=p;return [{id:oid,mode:'test',provider_session:'cs_fixture',amount:1900,currency:'usd',status:'pending'}]}},fetcher:async()=>Response.json({success:true,data:{id:'cs_fixture',metadata:{order_id:oid},amount_total:1900,currency:'usd',payment_status:'paid',status:'complete'}})});
+ const result=await s.handle(q,res());assert.ok(path.includes('owner_id=eq.'+uid));assert.ok(path.includes('mode=eq.test'));assert.equal(result.findings[0].issue,'paid_at_provider_pending_locally');
+});
+test('hosted reconciliation is unavailable outside sandbox preview',async()=>{
+ const s=createService({env,db:{user:async()=>({id:uid})}});await assert.rejects(s.handle(req('sandbox-reconcile'),res()),{status:404});
+});
