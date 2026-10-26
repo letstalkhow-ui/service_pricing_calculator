@@ -102,3 +102,5 @@ The amount interpretation matches the official charge reference: https://docs.st
 ## Cumulative full refund verified
 
 At 12:28:07 UTC on 26 October 2026, the genuine remaining $13 sandbox refund brought cumulative refunds to 1900 minor units. The deployed handler automatically set order `353dffc1-506f-49da-ab4b-f794096ca055` to revoked and its report entitlement to inactive. The $5 + $1 + $13 sequence now verifies partial retention and cumulative-full revocation with real provider callbacks. Earlier pending cumulative-full gates above are superseded by this result. Live payments remain disabled. Temporary designated-order diagnostic cleanup and the other release gates remain outstanding.
+
+Temporary sandbox refund diagnostic removed after successful provider verification. The cumulative audit remains in private payment events. No payment credentials, access rules or live flags changed. Remaining work includes session refresh/sign-out checks, provider replay/dispute verification, reconciliation monitoring, cleanup and retention procedures, and separate production callback verification.
