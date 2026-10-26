@@ -22,3 +22,16 @@ test('external sandbox callback enables only the pinned preview test integration
  assert.equal(P.settings(e).checkout,true);
  for(const patch of [{VERCEL_ENV:'production'},{HANDYPAY_API_KEY:'hp_live_fixture',VIABILITY_LIVE_PAYMENTS_ENABLED:'true'},{VIABILITY_SANDBOX_CALLBACK_URL:'https://untrusted.example/webhook'},{VIABILITY_CHECKOUT_ENABLED:'false'}])assert.equal(P.settings({...e,...patch}).checkout,false);
 });
+
+test('expired access refreshes once, rotates cookies and validates the renewed user',async()=>{
+ const calls=[];const db=P.client(P.settings(env),async(url,o)=>{calls.push({url,o});if(calls.length===1)return new Response('{}',{status:401});if(url.includes('grant_type=refresh_token'))return Response.json({access_token:'new.access',refresh_token:'new.refresh',expires_in:3600});assert.equal(o.headers.Authorization,'Bearer new.access');return Response.json({id:uid,email:'qa@example.com',email_confirmed_at:'2026-10-26'});});
+ const r=res(),user=await db.user({headers:{cookie:'__Host-bb_access=expired; __Host-bb_refresh=old.refresh'}},r);
+ assert.equal(user.token,'new.access');assert.equal(calls.length,3);assert.equal(JSON.parse(calls[1].o.body).refresh_token,'old.refresh');assert.ok(r.headers['Set-Cookie'].some(c=>c.startsWith('__Host-bb_refresh=new.refresh;')));
+});
+test('failed refresh cannot grant account access',async()=>{
+ let calls=0;const db=P.client(P.settings(env),async()=>{calls++;return new Response('{}',{status:401});});
+ await assert.rejects(db.user({headers:{cookie:'__Host-bb_access=expired; __Host-bb_refresh=invalid'}},res()),{status:401});assert.equal(calls,2);
+});
+test('sign-out clears both cookies even when provider logout is unavailable',async()=>{
+ const s=createService({env,db:{request:async()=>{throw new Error('offline')}}});const r=res(),q=req('sign-out','POST',{});q.headers.cookie='__Host-bb_access=old';assert.deepEqual(await s.handle(q,r),{signed_out:true});assert.equal(r.headers['Set-Cookie'].length,2);for(const c of r.headers['Set-Cookie'])assert.match(c,/Max-Age=0/);assert.equal(r.headers['Cache-Control'],'no-store');
+});
