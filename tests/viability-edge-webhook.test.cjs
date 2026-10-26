@@ -11,3 +11,35 @@ test('live events cannot reach provider or database',async()=>{let calls=0;const
 test('verified sandbox delivery checks provider and order before finalizing',async()=>{const calls=[];const h=await handler(env,async(url,opts)=>{calls.push({url,opts});if(url.includes('api.handypay.me')){assert.equal(opts.headers.Accept,'application/json');return Response.json({success:true,data:{id:'cs_fixture',status:'complete',payment_status:'paid',metadata:{order_id:oid},amount_total:1900,currency:'usd'}});}if(url.includes('/rpc/'))return Response.json(oid);return Response.json([{id:oid,amount:1900,currency:'usd',mode:'test'}]);});const r=await h(request(event));assert.equal(r.status,200);assert.equal((await r.json()).report_id,oid);assert.equal(calls.length,3);assert.equal(JSON.parse(calls[2].opts.body).p_mode,'test');});
 test('sandbox refund cannot revoke a live order',async()=>{let writes=0;const h=await handler(env,async(url)=>{if(url.includes('/rpc/'))writes++;assert.ok(url.includes('mode=eq.test'));return Response.json([]);});assert.equal((await h(request({id:'evt_refund',type:'charge.refunded',livemode:false,data:{payment_intent:'pi_live'}}))).status,409);assert.equal(writes,0);});
 test('oversized signed-looking deliveries fail before provider calls',async()=>{let calls=0;const h=await handler(env,async()=>{calls++});const r=new Request('https://fixture',{method:'POST',body:'x'.repeat(1048577),headers:{'x-handypay-signature':'sha256='+'0'.repeat(64)}});assert.equal((await h(r)).status,413);assert.equal(calls,0);});
+
+for(const type of ['charge.refunded','charge.dispute.created']){
+ test(type+' waits for payment reconciliation without acknowledging success',async()=>{
+  let writes=0;
+  const h=await handler(env,async url=>{if(url.includes('/rpc/'))writes++;return Response.json([]);});
+  const r=await h(request({id:'evt_early',type,livemode:false,data:{payment_intent:'pi_fixture'}}));
+  assert.equal(r.status,409);assert.equal(writes,0);
+ });
+ test(type+' preserves event identity and raw-body hash for database deduplication',async()=>{
+  const payload={id:'evt_repeated',type,livemode:false,data:{payment_intent:'pi_fixture'}};
+  const received=[];
+  const h=await handler(env,async(url,options)=>{
+   if(url.includes('/rpc/')){received.push(JSON.parse(options.body));return Response.json(true);}
+   return Response.json([{id:oid}]);
+  });
+  assert.equal((await h(request(payload))).status,200);
+  assert.equal((await h(request(payload))).status,200);
+  assert.deepEqual(received[0],received[1]);
+  assert.equal(received[0].p_event,payload.id);
+  assert.equal(received[0].p_hash,crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex'));
+ });
+}
+test('database failure during revocation returns a retryable failure without leaking details',async()=>{
+ const h=await handler(env,async url=>url.includes('/rpc/')?new Response('private database details',{status:500}):Response.json([{id:oid}]));
+ const r=await h(request({id:'evt_retry',type:'charge.refunded',livemode:false,data:{payment_intent:'pi_fixture'}}));
+ assert.equal(r.status,502);assert.doesNotMatch(await r.text(),/private database/);
+});
+test('refund without canonical payment reference cannot reach database',async()=>{
+ let calls=0;const h=await handler(env,async()=>{calls++;});
+ assert.equal((await h(request({id:'evt_bad_refund',type:'charge.refunded',data:{payment_intent:'unverified'}}))).status,422);
+ assert.equal(calls,0);
+});
