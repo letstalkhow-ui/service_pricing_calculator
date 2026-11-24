@@ -3,7 +3,9 @@ module.exports=async(req,res)=>{
  res.setHeader('Cache-Control','no-store');
  const env=process.env,secret=env.BB_MONITOR_SECRET,auth=req.headers.authorization||'';
  if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
- if(!secret||secret.length<32||auth.length!==('Bearer '+secret).length||!crypto.timingSafeEqual(Buffer.from(auth),Buffer.from('Bearer '+secret)))return res.status(401).json({error:'Unauthorized'});
+ const expected=Buffer.from('Bearer '+(secret||''));
+ const supplied=typeof auth==='string'?Buffer.from(auth):Buffer.alloc(0);
+ if(!secret||secret.length<32||supplied.length!==expected.length||!crypto.timingSafeEqual(supplied,expected))return res.status(401).json({error:'Unauthorized'});
  if(env.VERCEL_ENV!=='preview'||!env.BREVO_API_KEY||!env.BREVO_SENDER_EMAIL||!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return res.status(503).json({error:'Monitor not configured'});
  try{
   const headers={apikey:env.SUPABASE_SERVICE_ROLE_KEY,Authorization:'Bearer '+env.SUPABASE_SERVICE_ROLE_KEY,'Content-Type':'application/json'};
