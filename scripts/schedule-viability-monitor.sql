@@ -4,7 +4,7 @@
 -- Existing database-only hourly job remains independent.
 select cron.schedule('bb-payment-alert-hourly','19 * * * *',$job$
 select net.http_post(
- url:='https://businessboostsservice-pricing-calculator-apz39mo37-lth7.vercel.app/api/viability-monitor-alert',
+ url:='https://businessboostsservice-pricing-calculator-24hynauqd-lth7.vercel.app/api/viability-monitor-alert',
  headers:=jsonb_build_object(
  'Content-Type','application/json',
  'Authorization','Bearer '||(select decrypted_secret from vault.decrypted_secrets where name='bb_monitor_secret'),
