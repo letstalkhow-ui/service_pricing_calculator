@@ -7,6 +7,7 @@ module.exports=async(req,res)=>{
  const supplied=typeof auth==='string'?Buffer.from(auth):Buffer.alloc(0);
  if(!secret||secret.length<32||supplied.length!==expected.length||!crypto.timingSafeEqual(supplied,expected))return res.status(401).json({error:'Unauthorized'});
  if(env.VERCEL_ENV!=='preview'||!env.BREVO_API_KEY||!env.BREVO_SENDER_EMAIL||!env.SUPABASE_URL||!env.SUPABASE_SERVICE_ROLE_KEY)return res.status(503).json({error:'Monitor not configured'});
+ if(req.body?.provider_probe===true)return require('../lib/viability-provider-probe')(req,res);
  const testEmail=req.body?.test_email===true;
  let recordOutcome;
  try{
