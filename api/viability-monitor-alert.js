@@ -18,6 +18,6 @@ module.exports=async(req,res)=>{
   if(!findings.length&&!testEmail)return res.status(200).json({checked:true,alert_sent:false});
   const summary=findings.map(f=>({mode:f.mode,issue:f.issue,count:f.order_count}));
   const sent=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',headers:{'api-key':env.BREVO_API_KEY,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({sender:{name:'BusinessBoosts',email:env.BREVO_SENDER_EMAIL},to:[{email:'letstalkhow@gmail.com'}],subject:testEmail?'BusinessBoosts: payment monitoring TEST':'BusinessBoosts: payment integrity review needed',textContent:testEmail?'This is a requested test of the BusinessBoosts payment monitoring email path. No payment or report access was changed. Current database findings: '+JSON.stringify(summary):'Database payment/access checks found issues. Review the private payment monitor before changing access. This is not a merchant settlement or refund reconciliation.\n\n'+JSON.stringify(summary),tags:['payment-monitor']}),signal:AbortSignal.timeout(10000)});
-  if(!sent.ok)throw new Error('email');return res.status(200).json({checked:true,alert_sent:true});
+  if(!sent.ok)return res.status(502).json({error:'Email provider rejected delivery',provider_status:sent.status});return res.status(200).json({checked:true,alert_sent:true});
  }catch{return res.status(502).json({error:'Monitoring or alert delivery failed'});}
 };
