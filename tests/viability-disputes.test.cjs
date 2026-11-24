@@ -1,0 +1,11 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');
+const {reconcileDisputes}=require('../lib/viability-disputes');
+const dispute={id:'dp_123',payment_intent:'pi_123',amount_cents:1900,currency:'usd'};
+const order={id:'order',mode:'test',payment_intent:'pi_123',amount:1900,currency:'usd'};
+const deps={getOrders:async()=>[order],hasActiveAccess:async()=>true};
+test('flags active access for a matched dispute without returning customer data',async()=>{const r=await reconcileDisputes({data:[dispute],has_more:false},deps);assert.equal(r.complete,true);assert.deepEqual(r.findings,[{issue:'dispute_with_active_access'}]);});
+test('revoked access needs no access finding',async()=>{const r=await reconcileDisputes({data:[dispute],has_more:false},{...deps,hasActiveAccess:async()=>false});assert.deepEqual(r.findings,[]);});
+test('mode and currency mismatches cannot appear reconciled',async()=>{for(const change of [{mode:'live'},{currency:'mur'}]){const r=await reconcileDisputes({data:[dispute],has_more:false},{...deps,getOrders:async()=>[{...order,...change}]});assert.equal(r.checked,0);assert.equal(r.findings[0].issue,'dispute_order_mismatch');}});
+test('pagination and bounded work are explicitly incomplete',async()=>{assert.equal((await reconcileDisputes({data:[],has_more:true},deps)).complete,false);});
+test('missing references and unmatched disputes are visible',async()=>{const r=await reconcileDisputes({data:[{...dispute,payment_intent:null}],has_more:false},deps);assert.equal(r.findings[0].issue,'missing_payment_reference');const u=await reconcileDisputes({data:[dispute],has_more:false},{...deps,getOrders:async()=>[]});assert.equal(u.findings[0].issue,'unmatched_dispute');});
+test('provider and database failures never report a clean check',async()=>{await assert.rejects(reconcileDisputes({},deps));await assert.rejects(reconcileDisputes({data:[dispute],has_more:false},{...deps,getOrders:async()=>{throw Error('offline')}}));});
